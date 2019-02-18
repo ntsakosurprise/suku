@@ -89,6 +89,7 @@ SUKU.domLoaded(function(){
 
 		// console.log(localStorage)
 		// localStorage.removeItem('detail')
+		localStorage.removeItem('cart')
 		activator.activate()
 
 

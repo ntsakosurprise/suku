@@ -38,7 +38,9 @@ var activator = (function(){
 				
 						app: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata],
 						dashboard: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata],
-						menulist: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata]
+						menulist: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata],
+						detail: [Preloader,Requery,Messenger,Component,Render,List,Accordion,Modal,Cart,Navigata],
+						bargain: [Preloader,Requery,Messenger,Component,Render,Accordion,Modal,Cart,Navigata]
 					}
 				},
 				

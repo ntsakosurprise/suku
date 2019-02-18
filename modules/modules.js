@@ -1,6 +1,5 @@
 
 
-
 function Search(sandbox){
 
 
@@ -1612,10 +1611,17 @@ Component.prototype.handleComponentCreationDone = function(data){
 	
 	var sb = this.sb 
 
-	sb.sb_addChild(sb.view,data)
-	this.emit({type:'stop-preloader',data:''})
-	this.emit({type:'create-links',data:''})
+	if(!sb.view.contains(data)){
 
+		sb.sb_addChild(sb.view,data)
+		this.emit({type:'stop-preloader',data:''})
+	    this.emit({type:'create-links',data:''})
+
+
+	}
+   
+	
+	
 }
 
 Component.prototype.handleComponentRender = function(data){
@@ -1633,6 +1639,175 @@ Component.prototype.messenger = function(data){
 	
 	  this.emit({type: 'retrieve-data',data: data })
 	
+}
+
+Component.prototype.tools = function(id){
+	  
+	var that = this
+
+	var tools = {
+
+		detail: {
+
+			events: {
+
+				addToCart: function(ev){
+
+					var sb = that.sb
+	
+					sb.sb_stopEventBubble(ev)
+					var productData = this.functions.getAddProduct(ev)
+					that.emit({type:'add-to-cart',data: productData})
+				},
+				updateCart: function(ev){
+	
+					var sb = that.sb
+	
+					// console.log('The input event')
+					// console.log(ev)
+					//ev.stopImmediatePropagation()
+					var productData = this.functions.getUpdateProduct(ev)
+					if(productData){
+	
+						that.emit({type:'update-cart',data: productData})
+	
+					}
+	
+					return false;
+	
+	
+				},
+				removeFromCart: function(ev){
+	
+					var sb = that.sb
+	
+					sb.sb_stopEventBubble(ev)
+	
+					var productData = this.functions.getRemoveProduct(ev)
+					if(productData){
+	
+						that.emit({type:'remove-from-cart',data: productData})
+	
+					}
+								
+				}
+
+			},
+			functions:{
+
+
+
+				getAddProduct : function(evt){
+
+					var sb = that.sb
+				
+					var productFm = sb.sb_getParent(evt.target)
+				
+					if(!productFm.product_qty.value){
+				
+						sb.sb_addProperty(productFm.product_qty,'value')
+						productFm.product_qty.value =  1 
+						
+					}else{
+				
+						productFm.product_qty.value = parseInt(productFm.product_qty.value,10) + 1 
+						
+					}
+				
+					
+					var productData = {
+				
+						productId: productFm.product_id.value,
+						productName: productFm.product_name.value,
+						productPrice: parseFloat(productFm.product_price.value,2),
+						productQty: parseInt(productFm.product_qty.value,10)
+					}
+				
+					return productData
+				
+				
+				},
+				getRemoveProduct : function(evt){
+				
+						var sb = that.sb
+				
+						var productFm = sb.sb_getParent(evt.target)
+				
+						if(productFm.product_qty.value && parseInt(productFm.product_qty.value,10) > 0){
+				
+							productFm.product_qty.value = parseInt(productFm.product_qty.value,10) - 1
+				
+				
+							var productData = {
+				
+								productId: productFm.product_id.value,
+								productName: productFm.product_name.value,
+								productPrice: parseFloat(productFm.product_price.value,2),
+								productQty: parseInt(productFm.product_qty.value,10)
+							}
+				
+							return productData
+						
+						}else{
+				
+							console.log('The product to remove is not')
+							return null
+						}
+				
+				
+				},
+				getUpdateProduct : function(evt){
+				
+				
+					var sb = that.sb
+					
+					var productFm = sb.sb_getParent(evt.target)
+					var updateValue = parseInt(productFm.product_qty.value.trim())
+					console.log('The converted update value')
+					console.log(updateValue)
+				
+					
+					
+				
+						if((updateValue !== '') && (!isNaN(updateValue)) && updateValue >= 0){
+				
+							
+				
+				
+							var productData = {
+				
+								productId: productFm.product_id.value,
+								productName: productFm.product_name.value,
+								productPrice: parseFloat(productFm.product_price.value,2),
+								productQty: parseInt(productFm.product_qty.value,10)
+							}
+				
+							return productData
+							 
+				
+						}else{
+				
+							
+							console.log('The value is not in required format')
+							return null
+						}
+						
+				
+				
+				}
+			}
+			
+		
+
+		}
+	}
+
+	if(tools[id]){
+
+		return tools[id]
+	}
+
+  
 }
 
 
@@ -1693,7 +1868,7 @@ Component.prototype.menulist = function(data){
 	
 
 	var catlist = sb.sb_createElement('article')
-	var url = 'http://localhost:3000'+data.endpoint+'/'+ data.data   
+	var url = 'https://smarfoapi.herokuapp.com'+data.endpoint+'/'+ data.data   
 
 
 	this.messenger({url: url,data:'data',success: success.bind(this),fail: fail.bind(this)})
@@ -1723,7 +1898,7 @@ Component.prototype.menulist = function(data){
 				src: 'img/starters/',
 				styles:{
 
-					class: 'top-offset-vh-xx-sm pos-rel'
+					class: 'top-offset-vh-x-tn mg-bottom-fd-hg pos-rel'
 				}
 			},
 			parent:  catlist
@@ -1749,8 +1924,9 @@ Component.prototype.dashboard = function(data){
 	console.log(data)	
 	var sb = this.sb
 	var menulist = sb.sb_createElement('article')
+	 sb.sb_addProperty(menulist,'class','top-offset-vh-x-tn pos-rel mg-bottom-fd-hg')
 	//url = 'https://smarfoapi.herokuapp.com/smarfo/menu' 
-	var url = 'http://localhost:3000/smarfo/menu' 
+	var url = 'https://smarfoapi.herokuapp.com/smarfo/menu' 
 
 	this.messenger({url: url,data:'data',success: success.bind(this),fail: fail.bind(this)})
 
@@ -1797,6 +1973,836 @@ function fail(data){
 
 
 }
+
+Component.prototype.detail = function(data){
+	  
+	var sb = this.sb
+
+	
+
+	// var catlist = sb.sb_createElement('article')
+	console.log(data.data)
+	var url = 'https://smarfoapi.herokuapp.com/smarfo'+data.endpoint+'/Starters/'+data.data
+
+	// var sdata = {
+
+	// 	menuitem: "Starters",
+	// 	item: data.data.item_id
+	// }
+	this.messenger({url: url,data:'sdata',success: success.bind(this),fail: fail.bind(this)})
+	var tools = this.tools('detail')
+	
+
+	function success(data){
+
+		console.log('Successfull request')
+		console.log(data)
+	
+		var data = sb.sb_jsonToJs(data).detail
+		console.log(data)
+
+		
+		var productP = sb.sb_createElement('article')
+		var product = sb.sb_createElement('div')
+		var productI = sb.sb_createElement('img')
+		var actions = sb.sb_createElement('div')
+		var actionsCustomise = sb.sb_createElement('section')
+		var actionsCart = sb.sb_createElement('section')
+		var customise = sb.sb_createElement('div')
+		var customiseBtn = sb.sb_createElement('button')
+		var actionsCartForm = sb.sb_createElement('form')
+		var minus = sb.sb_createElement('input')
+		var update = sb.sb_createElement('input')
+		var add = sb.sb_createElement('input')
+		var inputId = sb.sb_createElement('input')
+		var inputPrice = sb.sb_createElement('input')
+		var inputName = sb.sb_createElement('input')
+
+		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg mg-bottom-fd-hg pos-rel top-offset-vh-x-tn')
+		sb.sb_addProperty(product,'class','hr-size-fl-x-bg mg-auto mg-bottom-fd-xx-tn')
+		sb.sb_addProperty(productI,'src','img/starters/'+data.image)
+		sb.sb_addProperty(productI,'class','hr-size-fl-xx-bg ')
+		sb.sb_addProperty(actions,'class','pos-fd hr-size-fl-xx-bg bx-shadow bottom-offset-0 bg-light pd-top-fd-xxx-sm pd-bottom-fd-xx-tn z-index')
+		sb.sb_addProperty(actionsCustomise,'class','pos-rel hr-size-fl-sm d-inline-block')
+		sb.sb_addProperty(actionsCart,'class','pos-rel hr-size-fl-md d-inline-block')
+		sb.sb_addProperty(customiseBtn,'class','d-inline-block mg-left-fl-xxx-tn  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-rel btn bg-secondary fg-light')
+		sb.sb_insertInner(customiseBtn,'Customise')
+		sb.sb_addProperty(actionsCartForm,'class','pos-rel left-offset-0')
+		sb.sb_addProperty(minus,'class','d-inline-block hr-size-fl-xxx-sm cursor-pointer vt-size-fd-bt  bg-light bd-top-left-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center font-wt-bolder font-fd-xx-tn')
+		sb.sb_addProperty(minus,'type','button')
+		sb.sb_addProperty(minus,'value','-')
+		sb.sb_addProperty(minus,'name','remove_product')
+		sb.sb_addEvent(minus,'click',tools.events.removeFromCart.bind(tools))
+		sb.sb_addProperty(update,'class','vt-size-fd-bt d-inline-block hr-size-fl-xxx-sm pd-fd-xx-tn bg-light bd-fd-secondary-xx-bt')
+		sb.sb_addProperty(update,'type','number')
+		sb.sb_addProperty(update,'placeholder','0')
+		sb.sb_addProperty(update,'name','product_qty')
+		sb.sb_addEvent(update,'input',tools.events.updateCart.bind(tools))
+		sb.sb_addProperty(add,'class','d-inline-block hr-size-fl-xxx-sm cursor-pointer vt-size-fd-bt  bg-light bd-bottom-right-rad-fd-xx-bt bd-top-right-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center font-wt-bolder font-fd-xx-tn')
+		sb.sb_addProperty(add,'type','button')
+		sb.sb_addProperty(add,'value','+')
+		sb.sb_addProperty(add,'name','add_product')
+		sb.sb_addEvent(add,'click',tools.events.addToCart.bind(tools))
+		
+		sb.sb_addProperty(inputId,'type','hidden')
+		sb.sb_addProperty(inputId,'name','product_id')
+		sb.sb_addProperty(inputId,'value','sampleid')
+
+		sb.sb_addProperty(inputPrice,'type','hidden')
+		sb.sb_addProperty(inputPrice,'name','product_price')
+		sb.sb_addProperty(inputPrice,'value','sampleprice')
+
+		
+		sb.sb_addProperty(inputName,'type','hidden')
+		sb.sb_addProperty(inputName,'name','product_name')
+		sb.sb_addProperty(inputName,'value','sampleproducts')
+
+
+
+		sb.sb_addChild(productP,product)
+		sb.sb_addChild(product,productI)
+		sb.sb_addChild(actions,actionsCustomise)
+		sb.sb_addChild(actions,actionsCart)
+		// sb.sb_addChild(actions,actionsCustomise)
+		sb.sb_addChild(actionsCart,actionsCartForm)
+		sb.sb_addChild(actionsCartForm,minus)
+		sb.sb_addChild(actionsCartForm,update)
+		sb.sb_addChild(actionsCartForm,add)
+		sb.sb_addChild(actionsCartForm,inputId)
+		sb.sb_addChild(actionsCartForm,inputPrice)
+		sb.sb_addChild(actionsCartForm,inputName)
+		sb.sb_addChild(actionsCustomise,customise)
+		sb.sb_addChild(customise,customiseBtn)
+		sb.sb_addChild(productP,actions)
+		
+		// for(p in data){
+
+		// 	if(!(p === 'image' || p === 'variants')){
+
+
+		// 		this.emit({type: 'create-accordion',data:{
+
+		// 			parent: productP,
+		// 			title: p,
+		// 			data: data[p]
+
+
+		// 		}})
+
+		// 	}
+		// }
+
+
+		// Accordion
+
+		 var desc = sb.sb_createElement('div')
+		 var ing = sb.sb_createElement('ul')
+		 sb.sb_addProperty(ing,'class','list list--hr list--none')
+		 sb.sb_addProperty(desc,'class','accordion__content d-none hr-size-fl-x-bg mg-auto accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn')
+		 sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-x-b mg-auto accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
+		  sb.sb_insertInner(desc,data.description)
+
+		// Modal
+
+		 var modalList = sb.sb_createElement('ul')
+		 var modals = []
+		 sb.sb_addProperty(modalList,'class','list list--hr list--none')
+		//  var ing = sb.sb_createElement('div')
+		//  sb.sb_addProperty(desc,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn')
+		//  sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
+		//   sb.sb_insertInner(desc,data.description)
+
+		for(var i = 0; i < data.ingredients.length; i++){
+
+			var li = sb.sb_createElement('li')
+			var sp = sb.sb_createElement('span')
+			sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+			sb.sb_addProperty(sp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+
+			sb.sb_insertInner(sp,data.ingredients[i])
+			sb.sb_addChild(li,sp)
+			sb.sb_addChild(ing,li)
+
+		}
+		
+
+		 for(v in data.variants){
+
+			 var li = sb.sb_createElement('li')
+			 var sp = sb.sb_createElement('span')
+
+			 sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+
+			 sb.sb_addProperty(sp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+			 console.log('v')
+			 console.log(typeof v)
+			 if(v.trim() === "drinks"){sb.sb_insertInner(sp,'Drink Choice')}else{sb.sb_insertInner(sp,v)}
+			
+			 sb.sb_addChild(li,sp)
+
+			 sb.sb_addChild(modalList,li)
+
+			 var modal = {}
+			 var optionsForm = sb.sb_createElement('form')
+			 var optionList = sb.sb_createElement('ul')
+			 sb.sb_addProperty(optionsForm,'class','form')
+			 sb.sb_addProperty(optionList,'class','list list--hr list--none')
+
+			 sb.sb_addChild(optionsForm,optionList)
+
+			 for(it in data.variants[v]){
+
+				var uli = sb.sb_createElement('li')
+				var usp = sb.sb_createElement('span')   
+				var updator = sb.sb_createElement('input')
+				var updatorLabel = sb.sb_createElement('label')
+				var updatorLabelSp = sb.sb_createElement('span')
+				var uinputId = sb.sb_createElement('input')
+				var uinputPrice = sb.sb_createElement('input')
+				var uinputName = sb.sb_createElement('input')
+				var radioCont = sb.sb_createElement('div')
+				var idCont = sb.sb_createElement('div')
+				var priceCont = sb.sb_createElement('div')
+
+				sb.sb_addProperty(uli,'class','list__item form__radio__group list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small d-block hr-size-fl-bg cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+				sb.sb_addProperty(usp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+				
+				sb.sb_addProperty(updator,'type','radio')
+				sb.sb_addProperty(updator,'name','updator')
+				sb.sb_addProperty(updator,'id','updator')
+				sb.sb_addProperty(updator,'value','value')
+				sb.sb_addProperty(updator,'class','form__radio__group')
+
+				sb.sb_addProperty(updatorLabel,'type','label')
+				sb.sb_addProperty(updatorLabel,'for','updator')
+				sb.sb_addProperty(updatorLabel,'class','form__radio__label')
+				sb.sb_addProperty(updatorLabelSp,'class','form__radio__button')
+
+
+				sb.sb_addProperty(uinputId,'type','hidden')
+				sb.sb_addProperty(uinputId,'name','product_id')
+				sb.sb_addProperty(uinputId,'value','sampleid')
+		
+				sb.sb_addProperty(uinputPrice,'type','hidden')
+				sb.sb_addProperty(uinputPrice,'name','product_price')
+				sb.sb_addProperty(uinputPrice,'value','sampleprice')
+		
+				
+				sb.sb_addProperty(uinputName,'type','hidden')
+				sb.sb_addProperty(uinputName,'name','product_name')
+				sb.sb_addProperty(uinputName,'value','sampleproducts')
+
+				sb.sb_addProperty(radioCont,'class','d-inline-block pd-left-fl-x-bt hr-size-fl-xxx-sm')
+				sb.sb_addProperty(idCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
+				sb.sb_addProperty(priceCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
+
+			
+				sb.sb_insertInner(idCont,'sample')
+				sb.sb_insertInner(priceCont,'R854')
+
+				sb.sb_addChild(optionList,uli)
+				sb.sb_addChild(uli,radioCont)
+				sb.sb_addChild(uli,idCont)
+				sb.sb_addChild(uli,priceCont)
+				sb.sb_addChild(updatorLabel,updatorLabelSp)
+				sb.sb_addChild(updator,updatorLabel)
+				sb.sb_addChild(radioCont,updator)
+			
+
+			 }
+
+			 modal.activator = {
+
+				activate: li
+			 },
+			 modal.parent ={
+
+				class: 'modal',
+				id: v
+
+			}
+			 modal.body = {
+
+				body:  optionsForm,
+				class: 'modal__body'
+				
+				}
+			 modal.head = {
+				 head: true,
+				 buttonText: 'Done',
+				 title: v,
+				 class: 'modal__head ',
+				 child: {
+
+					class: 'modal__close-top-btn bx-shadow  modal__button close-modal'
+				 }
+				
+			 }
+			 modal.foot = {
+				foot: true,
+				buttonText: 'Done',
+				class: 'modal__foot pos-fd bottom-offset-0 ',
+				child: {
+
+					class: 'modal__button modal__close-bottom-btn hr-size-fl-xx-bg font-fd-x-tn bx-shadow d-block mg-auto close-modal'
+				 }
+				
+				
+			}
+			modal.content = {
+
+				class: 'modal__content modal__content--size-fl-xx-bg vt-size-flv-xx-bg modal__content--pos-rel modal__content--left-offset-0 modal__content--bg-light'
+
+			}
+			 modals.push(modal)
+
+		 }
+
+
+		var accordionData = {
+
+			 'description':{
+
+				parent: productP,
+				title: 'Description',
+				content: desc
+				
+				
+			 },
+			 'ingredients':{
+
+				parent: productP,
+				title: 'Ingredients',
+				content: ing
+			
+				
+			 }
+			 
+		}
+		
+		// Modal data
+
+		modals.unshift({
+
+			activator: {
+					
+				activate: customiseBtn
+			},
+			parent:{
+
+				class: 'modal',
+				id: 'customise'
+
+			},
+			head: {
+				head: false
+			},
+			content: {
+				class: 'modal__content bd-top-right-rad-fd-xx-bt modal__content--size-fl-xxx-md modal__content--pos-abs modal__content--left-offset-0 modal__content--bottom-offset-0 modal__content--bd-rad-fd-tn modal__content--bg-light'
+			},
+			body: {
+				body: modalList,
+				class: 'modal__body'
+			},
+			foot: {
+				foot: false
+			}
+
+
+		})
+
+		
+			
+		 
+		
+		
+		this.emit({type:'create-accordion',data: accordionData})
+		this.emit({type:'create-modal',data: modals})
+		this.emit({type:'component-resource-creation-done',data: productP})
+		
+
+		// console.log(data)
+		// console.log('The return json data')
+		// console.log(data)
+		// let menu = sb.sb_jsonToJs(data)
+		// if(menu.categories){
+
+		// 	menu = menu.categories
+		// }else{
+		// 	menu = menu.items
+		// }
+		// console.log('The js')
+		// console.log(menu)
+
+		// this.emit({type: 'create-list',data:{
+
+		// 	type: 'regular',
+		// 	data: menu,
+		// 	options: {
+
+		// 		image: true,
+		// 		src: 'img/starters/',
+		// 		styles:{
+
+		// 			class: 'top-offset-vh-xx-sm pos-rel'
+		// 		}
+		// 	},
+		// 	parent:  catlist
+
+		// }})
+
+	}
+	
+
+	function fail(data){
+
+
+
+		console.log('Failed request')
+		console.log(data)
+		// this.emit({type: 'stop-preloader',data: data})
+
+	}
+	
+	
+}
+
+
+Component.prototype.bargain = function(data){
+	  
+	var sb = this.sb
+
+	
+
+	// var catlist = sb.sb_createElement('article')
+	console.log(data.data)
+	var url = 'http://localhost:3000/smarfo/bargain'
+
+	// var sdata = {
+
+	// 	menuitem: "Starters",
+	// 	item: data.data.item_id
+	// }
+	this.messenger({url: url,data:'sdata',success: success.bind(this),fail: fail.bind(this)})
+	var tools = this.tools('detail')
+	
+
+	function success(data){
+
+		console.log('Successfull Bargain request')
+		console.log(data)
+	
+		var data = sb.sb_jsonToJs(data).detail
+		console.log(data)
+
+		
+		var productP = sb.sb_createElement('article')
+		var product = sb.sb_createElement('div')
+		var productI = sb.sb_createElement('img')
+		 var bargain = sb.sb_createElement('div')
+		 var bTitle = sb.sb_createElement('h1')
+		 var bTag = sb.sb_createElement('span')
+		 var bPrice = sb.sb_createElement('span')
+		 var bInfo = sb.sb_createElement('div')
+		 var bName = sb.sb_createElement('section')
+		 var bPercent = sb.sb_createElement('section')
+		 var bPercentC = sb.sb_createElement('div')
+		 var bPercentP = sb.sb_createElement('span')
+		 var bPercentO = sb.sb_createElement('span')
+
+		// var actionsCart = sb.sb_createElement('section')
+		// var customise = sb.sb_createElement('div')
+		// var customiseBtn = sb.sb_createElement('button')
+		// var actionsCartForm = sb.sb_createElement('form')
+		// var minus = sb.sb_createElement('input')
+		// var update = sb.sb_createElement('input')
+		// var add = sb.sb_createElement('input')
+		// var inputId = sb.sb_createElement('input')
+		// var inputPrice = sb.sb_createElement('input')
+		// var inputName = sb.sb_createElement('input')
+
+		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg top-offset-vh-xx-tn mg-bottom-fd-hg pos-rel')
+		sb.sb_addProperty(product,'class','hr-size-fl-x-bg pos-rel top-offset-vh-bt mg-auto mg-bottom-fd-tn')
+		sb.sb_addProperty(productI,'src','img/starters/'+data.image)
+		sb.sb_addProperty(productI,'class','hr-size-fl-xx-bg')
+		sb.sb_addProperty(bInfo,'class','hr-size-fl-xx-bg mg-bottom-fd-tn')
+		sb.sb_addProperty(bName,'class','hr-size-fl-xx-bg font-fd-x-tn')
+		sb.sb_addProperty(bPercent,'class','hr-size-fl-xx-bg hr-size-fd-md text-align-center pos-abs left-offset-fl-md bd-rad-fl-md bg-secondary vt-size-fd-bt')
+		sb.sb_addProperty(bPercentC,'class','d-block pos-rel top-offset-fl-tn fg-light')
+		sb.sb_addProperty(bPercentP,'class','d-block')
+		sb.sb_addProperty(bPercentO,'class','d-block')
+		sb.sb_addProperty(bargain,'class','hr-size-fl-xx-bg pos-rel  mg-auto mg-top-fd-tn mg-bottom-fd-tn')
+		sb.sb_addProperty(bTitle,'class','pos-abs  left-offset-fl-md  mg-bottom-fd-xxx-tn')
+		sb.sb_addProperty(bTag,'class',' pos-abs d-block left-offset-fl-x-bt top-offset-vh-bt mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary')
+		sb.sb_addProperty(bPrice,'class','pos-abs d-block left-offset-fl-bt top-offset-vh-xxx-tn font-fd-tn')
+		sb.sb_insertInner(bTitle,'Grab our daily bargain')
+		sb.sb_insertInner(bTag,'Only')
+		sb.sb_insertInner(bPrice,data.price)
+		sb.sb_insertInner(bName,data.name)
+		sb.sb_insertInner(bPercentP,data.percent)
+		sb.sb_insertInner(bPercentO,'off')
+
+
+		sb.sb_addChild(bargain,bTitle)
+		sb.sb_addChild(bargain,bTag)
+		sb.sb_addChild(bargain,bPrice)
+
+		sb.sb_addChild(bInfo,bName)
+		sb.sb_addChild(bInfo,bPercent)
+		sb.sb_addChild(bPercentC,bPercentP)
+		sb.sb_addChild(bPercentC,bPercentO)
+		sb.sb_addChild(bPercent,bPercentC)
+		
+		
+		// sb.sb_addProperty(actions,'class','pos-fd hr-size-fl-xx-bg bx-shadow bottom-offset-0 bg-light pd-top-fd-xxx-sm pd-bottom-fd-xx-tn z-index')
+		// sb.sb_addProperty(actionsCustomise,'class','pos-rel hr-size-fl-sm d-inline-block')
+		// sb.sb_addProperty(actionsCart,'class','pos-rel hr-size-fl-md d-inline-block')
+		// sb.sb_addProperty(customiseBtn,'class','d-inline-block mg-left-fl-xxx-tn  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-rel btn bg-secondary fg-light')
+		// sb.sb_insertInner(customiseBtn,'Customise')
+		// sb.sb_addProperty(actionsCartForm,'class','pos-rel left-offset-0')
+		// sb.sb_addProperty(minus,'class','d-inline-block hr-size-fl-xxx-sm cursor-pointer vt-size-fd-bt  bg-light bd-top-left-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center font-wt-bolder font-fd-xx-tn')
+		// sb.sb_addProperty(minus,'type','button')
+		// sb.sb_addProperty(minus,'value','-')
+		// sb.sb_addProperty(minus,'name','remove_product')
+		// sb.sb_addEvent(minus,'click',tools.events.removeFromCart.bind(tools))
+		// sb.sb_addProperty(update,'class','vt-size-fd-bt d-inline-block hr-size-fl-xxx-sm pd-fd-xx-tn bg-light bd-fd-secondary-xx-bt')
+		// sb.sb_addProperty(update,'type','number')
+		// sb.sb_addProperty(update,'placeholder','0')
+		// sb.sb_addProperty(update,'name','product_qty')
+		// sb.sb_addEvent(update,'input',tools.events.updateCart.bind(tools))
+		// sb.sb_addProperty(add,'class','d-inline-block hr-size-fl-xxx-sm cursor-pointer vt-size-fd-bt  bg-light bd-bottom-right-rad-fd-xx-bt bd-top-right-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center font-wt-bolder font-fd-xx-tn')
+		// sb.sb_addProperty(add,'type','button')
+		// sb.sb_addProperty(add,'value','+')
+		// sb.sb_addProperty(add,'name','add_product')
+		// sb.sb_addEvent(add,'click',tools.events.addToCart.bind(tools))
+		
+		// sb.sb_addProperty(inputId,'type','hidden')
+		// sb.sb_addProperty(inputId,'name','product_id')
+		// sb.sb_addProperty(inputId,'value','sampleid')
+
+		// sb.sb_addProperty(inputPrice,'type','hidden')
+		// sb.sb_addProperty(inputPrice,'name','product_price')
+		// sb.sb_addProperty(inputPrice,'value','sampleprice')
+
+		
+		// sb.sb_addProperty(inputName,'type','hidden')
+		// sb.sb_addProperty(inputName,'name','product_name')
+		// sb.sb_addProperty(inputName,'value','sampleproducts')
+
+
+
+		sb.sb_addChild(productP,product)
+		sb.sb_addChild(product,productI)
+		sb.sb_addChild(product,bInfo)
+		// sb.sb_addChild(actions,actionsCustomise)
+		// sb.sb_addChild(actions,actionsCart)
+		// // sb.sb_addChild(actions,actionsCustomise)
+		// sb.sb_addChild(actionsCart,actionsCartForm)
+		// sb.sb_addChild(actionsCartForm,minus)
+		// sb.sb_addChild(actionsCartForm,update)
+		// sb.sb_addChild(actionsCartForm,add)
+		// sb.sb_addChild(actionsCartForm,inputId)
+		// sb.sb_addChild(actionsCartForm,inputPrice)
+		// sb.sb_addChild(actionsCartForm,inputName)
+		// sb.sb_addChild(actionsCustomise,customise)
+		// sb.sb_addChild(customise,customiseBtn)
+		// sb.sb_addChild(productP,actions)
+		
+		// for(p in data){
+
+		// 	if(!(p === 'image' || p === 'variants')){
+
+
+		// 		this.emit({type: 'create-accordion',data:{
+
+		// 			parent: productP,
+		// 			title: p,
+		// 			data: data[p]
+
+
+		// 		}})
+
+		// 	}
+		// }
+
+
+		// // Accordion
+
+		//  var desc = sb.sb_createElement('div')
+		//  var ing = sb.sb_createElement('ul')
+		//  sb.sb_addProperty(ing,'class','list list--hr list--none')
+		//  sb.sb_addProperty(desc,'class','accordion__content d-none hr-size-fl-x-bg mg-auto accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn')
+		//  sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-x-b mg-auto accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
+		//   sb.sb_insertInner(desc,data.description)
+
+		// // Modal
+
+		//  var modalList = sb.sb_createElement('ul')
+		//  var modals = []
+		//  sb.sb_addProperty(modalList,'class','list list--hr list--none')
+		// //  var ing = sb.sb_createElement('div')
+		// //  sb.sb_addProperty(desc,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn')
+		// //  sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
+		// //   sb.sb_insertInner(desc,data.description)
+
+		// for(var i = 0; i < data.ingredients.length; i++){
+
+		// 	var li = sb.sb_createElement('li')
+		// 	var sp = sb.sb_createElement('span')
+		// 	sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+		// 	sb.sb_addProperty(sp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+
+		// 	sb.sb_insertInner(sp,data.ingredients[i])
+		// 	sb.sb_addChild(li,sp)
+		// 	sb.sb_addChild(ing,li)
+
+		// }
+		
+
+		//  for(v in data.variants){
+
+		// 	 var li = sb.sb_createElement('li')
+		// 	 var sp = sb.sb_createElement('span')
+
+		// 	 sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+
+		// 	 sb.sb_addProperty(sp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+		// 	 console.log('v')
+		// 	 console.log(typeof v)
+		// 	 if(v.trim() === "drinks"){sb.sb_insertInner(sp,'Drink Choice')}else{sb.sb_insertInner(sp,v)}
+			
+		// 	 sb.sb_addChild(li,sp)
+
+		// 	 sb.sb_addChild(modalList,li)
+
+		// 	 var modal = {}
+		// 	 var optionsForm = sb.sb_createElement('form')
+		// 	 var optionList = sb.sb_createElement('ul')
+		// 	 sb.sb_addProperty(optionsForm,'class','form')
+		// 	 sb.sb_addProperty(optionList,'class','list list--hr list--none')
+
+		// 	 sb.sb_addChild(optionsForm,optionList)
+
+		// 	 for(it in data.variants[v]){
+
+		// 		var uli = sb.sb_createElement('li')
+		// 		var usp = sb.sb_createElement('span')   
+		// 		var updator = sb.sb_createElement('input')
+		// 		var updatorLabel = sb.sb_createElement('label')
+		// 		var updatorLabelSp = sb.sb_createElement('span')
+		// 		var uinputId = sb.sb_createElement('input')
+		// 		var uinputPrice = sb.sb_createElement('input')
+		// 		var uinputName = sb.sb_createElement('input')
+		// 		var radioCont = sb.sb_createElement('div')
+		// 		var idCont = sb.sb_createElement('div')
+		// 		var priceCont = sb.sb_createElement('div')
+
+		// 		sb.sb_addProperty(uli,'class','list__item form__radio__group list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small d-block hr-size-fl-bg cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+		// 		sb.sb_addProperty(usp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+				
+		// 		sb.sb_addProperty(updator,'type','radio')
+		// 		sb.sb_addProperty(updator,'name','updator')
+		// 		sb.sb_addProperty(updator,'id','updator')
+		// 		sb.sb_addProperty(updator,'value','value')
+		// 		sb.sb_addProperty(updator,'class','form__radio__group')
+
+		// 		sb.sb_addProperty(updatorLabel,'type','label')
+		// 		sb.sb_addProperty(updatorLabel,'for','updator')
+		// 		sb.sb_addProperty(updatorLabel,'class','form__radio__label')
+		// 		sb.sb_addProperty(updatorLabelSp,'class','form__radio__button')
+
+
+		// 		sb.sb_addProperty(uinputId,'type','hidden')
+		// 		sb.sb_addProperty(uinputId,'name','product_id')
+		// 		sb.sb_addProperty(uinputId,'value','sampleid')
+		
+		// 		sb.sb_addProperty(uinputPrice,'type','hidden')
+		// 		sb.sb_addProperty(uinputPrice,'name','product_price')
+		// 		sb.sb_addProperty(uinputPrice,'value','sampleprice')
+		
+				
+		// 		sb.sb_addProperty(uinputName,'type','hidden')
+		// 		sb.sb_addProperty(uinputName,'name','product_name')
+		// 		sb.sb_addProperty(uinputName,'value','sampleproducts')
+
+		// 		sb.sb_addProperty(radioCont,'class','d-inline-block pd-left-fl-x-bt hr-size-fl-xxx-sm')
+		// 		sb.sb_addProperty(idCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
+		// 		sb.sb_addProperty(priceCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
+
+			
+		// 		sb.sb_insertInner(idCont,'sample')
+		// 		sb.sb_insertInner(priceCont,'R854')
+
+		// 		sb.sb_addChild(optionList,uli)
+		// 		sb.sb_addChild(uli,radioCont)
+		// 		sb.sb_addChild(uli,idCont)
+		// 		sb.sb_addChild(uli,priceCont)
+		// 		sb.sb_addChild(updatorLabel,updatorLabelSp)
+		// 		sb.sb_addChild(updator,updatorLabel)
+		// 		sb.sb_addChild(radioCont,updator)
+			
+
+		// 	 }
+
+		// 	 modal.activator = {
+
+		// 		activate: li
+		// 	 },
+		// 	 modal.parent ={
+
+		// 		class: 'modal',
+		// 		id: v
+
+		// 	}
+		// 	 modal.body = {
+
+		// 		body:  optionsForm,
+		// 		class: 'modal__body'
+				
+		// 		}
+		// 	 modal.head = {
+		// 		 head: true,
+		// 		 buttonText: 'Done',
+		// 		 title: v,
+		// 		 class: 'modal__head ',
+		// 		 child: {
+
+		// 			class: 'modal__close-top-btn bx-shadow  modal__button close-modal'
+		// 		 }
+				
+		// 	 }
+		// 	 modal.foot = {
+		// 		foot: true,
+		// 		buttonText: 'Done',
+		// 		class: 'modal__foot pos-fd bottom-offset-0 ',
+		// 		child: {
+
+		// 			class: 'modal__button modal__close-bottom-btn hr-size-fl-xx-bg font-fd-x-tn bx-shadow d-block mg-auto close-modal'
+		// 		 }
+				
+				
+		// 	}
+		// 	modal.content = {
+
+		// 		class: 'modal__content modal__content--size-fl-xx-bg vt-size-flv-xx-bg modal__content--pos-rel modal__content--left-offset-0 modal__content--bg-light'
+
+		// 	}
+		// 	 modals.push(modal)
+
+		//  }
+
+
+		// var accordionData = {
+
+		// 	 'description':{
+
+		// 		parent: productP,
+		// 		title: 'Description',
+		// 		content: desc
+				
+				
+		// 	 },
+		// 	 'ingredients':{
+
+		// 		parent: productP,
+		// 		title: 'Ingredients',
+		// 		content: ing
+			
+				
+		// 	 }
+			 
+		// }
+		
+		// // Modal data
+
+		// modals.unshift({
+
+		// 	activator: {
+					
+		// 		activate: customiseBtn
+		// 	},
+		// 	parent:{
+
+		// 		class: 'modal',
+		// 		id: 'customise'
+
+		// 	},
+		// 	head: {
+		// 		head: false
+		// 	},
+		// 	content: {
+		// 		class: 'modal__content bd-top-right-rad-fd-xx-bt modal__content--size-fl-xxx-md modal__content--pos-abs modal__content--left-offset-0 modal__content--bottom-offset-0 modal__content--bd-rad-fd-tn modal__content--bg-light'
+		// 	},
+		// 	body: {
+		// 		body: modalList,
+		// 		class: 'modal__body'
+		// 	},
+		// 	foot: {
+		// 		foot: false
+		// 	}
+
+
+		// })
+
+		
+			
+		 
+		
+		
+		// this.emit({type:'create-accordion',data: accordionData})
+		// this.emit({type:'create-modal',data: modals})
+		this.emit({type:'component-resource-creation-done',data: bargain})
+		this.emit({type:'component-resource-creation-done',data: productP})
+		
+
+		// console.log(data)
+		// console.log('The return json data')
+		// console.log(data)
+		// let menu = sb.sb_jsonToJs(data)
+		// if(menu.categories){
+
+		// 	menu = menu.categories
+		// }else{
+		// 	menu = menu.items
+		// }
+		// console.log('The js')
+		// console.log(menu)
+
+		// this.emit({type: 'create-list',data:{
+
+		// 	type: 'regular',
+		// 	data: menu,
+		// 	options: {
+
+		// 		image: true,
+		// 		src: 'img/starters/',
+		// 		styles:{
+
+		// 			class: 'top-offset-vh-xx-sm pos-rel'
+		// 		}
+		// 	},
+		// 	parent:  catlist
+
+		// }})
+
+	}
+	
+
+	function fail(data){
+
+
+
+		console.log('Failed request')
+		console.log(data)
+		// this.emit({type: 'stop-preloader',data: data})
+
+	}
+	
+	
+}
+
+
+
 
 
 function List(sandbox){
@@ -1923,12 +2929,14 @@ List.prototype.createTiled = function(itemData,options){
 
 List.prototype.createRegular = function(itemData,options){
 	
+		console.log('The Item Data')
+	   console.log(itemData)
 		
 		var sb = this.sb
 		let lst = sb.sb_createElement('li')
 		sb.sb_addProperty(lst,'class','hr-size-fl-xx-bg bx-shadow cursor-pointer fd-font-x-tn mg-bottom-fd-tn pd-left-fl-bt bg-light pos-rel d-block pd-bottom-fd-tn pd-top-fd-tn')
 	    sb.sb_addProperty(lst,'data-navigata-page','detail')
-	    sb.sb_addProperty(lst,'data-navigata-data','[{data: '+itemData.Name+',page: detail,endpoint: /smarfo/menuitem}]')
+	    sb.sb_addProperty(lst,'data-navigata-data','[{data: '+itemData.item_id+',page: detail,endpoint: /detail}]')
 
 		
 		if(options.image){
@@ -2377,7 +3385,481 @@ List.prototype.getters = {
 
 }
 
+function Accordion(sandbox){
+	
+	this.sb = sandbox
 
+	
+}
+
+Accordion.prototype.init = function(){
+	
+	this.listens()
+	
+}
+
+
+Accordion.prototype.listens = function(){
+	
+	var sb = this.sb 
+	sb.sb_notifyListen({
+		
+		
+		 'create-accordion': this.handleCreateAccordion.bind(this)
+		 
+	},sb.moduleMeta.moduleId,sb.moduleMeta.modInstId)
+}
+
+Accordion.prototype.emit = function(eNotifs){
+	
+	var sb = this.sb 
+
+	sb.sb_notifyEvent({
+	
+		type: eNotifs.type,
+		data: eNotifs.data
+
+		})
+	
+
+}
+
+Accordion.prototype.getParent = function(){
+			
+			
+   var sb = this.sb
+   
+   var parent = sb.sb_createElement('div')
+   sb.sb_addProperty(parent,'class','accordion accordion--vt-size-fd-bt accordion--bg-secondary accordion--pos-rel accordion--hr-size-fl-x-bg mg-auto mg-bottom-fd-xx-tn')
+   
+	return parent
+		
+	
+}
+
+
+Accordion.prototype.createBar = function(){
+			
+			
+   var sb = this.sb
+   
+   var bar = sb.sb_createElement('div')
+   sb.sb_addProperty(bar,'class','accordion__text')
+   
+	return bar
+		
+	
+}
+
+Accordion.prototype.createTitle = function(data){
+			
+   var sb = this.sb
+   
+   var title = sb.sb_createElement('p')
+   sb.sb_addProperty(title,'class','accordion__text-node pos-abs fg-general-alt font-fd-xx-tn')
+   sb.sb_insertInner(title,data)
+   
+   return title
+
+}
+
+Accordion.prototype.createController = function(){
+			
+   var sb = this.sb
+   
+   var btn  = sb.sb_createElement('button')
+   sb.sb_addProperty(btn,'class','accordion__btn--exp-con top-offset-fl-tn right-offset-fl-bt')
+   sb.sb_insertInner(btn,'+')
+   
+  
+   return btn
+}
+
+
+
+
+Accordion.prototype.handleCreateAccordion = function(data){
+
+	console.log('Create Modal event has occured')
+	console.log(data)
+	this.createAccordion(data)
+
+}
+
+
+
+Accordion.prototype.createAccordion = function(data){
+
+	var sb = this.sb
+	
+	if(Object.keys(data).length > 1){
+
+		for(el in data){
+
+			var parent = this.getParent()
+			var bar = this.createBar()
+			var title = this.createTitle(data[el].title)
+			var controller = this.createController()
+			
+			sb.sb_addChild(parent,bar)
+			sb.sb_addChild(parent,title)
+			sb.sb_addChild(parent,controller)
+			sb.sb_addChild(data[el].parent,parent)
+			sb.sb_addChild(data[el].parent,data[el].content)
+
+			console.log('The accordion content')
+			console.log(data[el].content)
+			
+			sb.sb_addEvent(controller,'click',this.expand.bind(this,data[el].content,controller))
+
+			this.emit({type: 'component-resource-creation-done',data: data[el].parent})
+		}
+
+	}else{
+
+		var parent = this.getParent()
+		var bar = this.createBar()
+		var title = this.createTitle(data.title)
+		var controller = this.createController()
+		
+		sb.sb_addChild(parent,bar)
+		sb.sb_addChild(parent,title)
+		sb.sb_addChild(parent,controller)
+		sb.sb_addChild(data.parent,parent)
+		sb.sb_addChild(data.parent,data.content)
+		
+		sb.sb_addEvent(controller,'click',this.expand.bind(this,data.content,controller))
+		this.emit({type: 'component-resource-creation-done',data: data.parent})
+
+	}
+
+   
+	
+	
+		
+	 
+
+
+}
+
+Accordion.prototype.expand = function(content,controller){
+
+ var sb = this.sb 
+
+ console.log('The content element')
+ console.log(content)
+ 
+ if(controller.innerHTML.trim() === '+'){
+ 	
+ 	    controller.innerHTML = '-'
+ 	
+ }else{
+ 	
+  	controller.innerHTML = '+'
+ }
+ var classList = sb.sb_getClasses(content)
+ sb.sb_toggleClass(classList,'d-none')
+ 
+
+}
+
+
+function Modal(sandbox){
+	
+	this.sb = sandbox
+	
+}
+
+Modal.prototype.init = function(){
+	
+	this.listens()
+	
+}
+
+Modal.prototype.listens = function(){
+	
+	var sb = this.sb 
+	sb.sb_notifyListen({ 
+		
+		
+		 'create-modal': this.handleCreateModal.bind(this)
+		 
+	},sb.moduleMeta.moduleId,sb.moduleMeta.modInstId)
+}
+
+Modal.prototype.emit = function(eNotifs){
+	
+	var sb = this.sb 
+
+	sb.sb_notifyEvent({
+	
+		type: eNotifs.type,
+		data: eNotifs.data
+
+		})
+	
+
+}
+
+Modal.prototype.getParent = function(options){
+			
+   var sb = this.sb 
+   
+
+   var parent = sb.sb_createElement('article')
+   sb.sb_addProperty(parent,'class',options.class)
+   sb.sb_addProperty(parent,'data-modal',options.id)
+//    if(options.opacity){
+   	
+//    	   switch(options.opacity){
+   	   	
+//    	   	  case 1: {
+   	   	  	 
+//    	   	  	 sb.sb_toggleClass(classList,'modal-op-bt')
+   	   	  	
+//    	   	  }
+//    	   	  break
+//    	   	   case 2: {
+   	   	  	 
+//    	   	  	 sb.sb_toggleClass(classList,'modal-op-bt')
+   	   	  	
+//    	   	  }
+//    	   	  break
+   	   	
+//    	   }
+   	
+//    }
+   
+		return parent
+		
+	
+}
+
+
+Modal.prototype.createModalHead = function(options){
+			
+			
+   var sb = this.sb
+   
+   var head = sb.sb_createElement('div')
+   var btn = sb.sb_createElement('span')
+   sb.sb_addProperty(head,'class',options.class)
+   sb.sb_addProperty(btn,'class',options.child.class)
+   sb.sb_insertInner(btn,options.buttonText)
+   sb.sb_addChild(head,btn)
+  
+	return {head: head,close: btn}
+		
+	
+}
+
+Modal.prototype.createModalContent = function(options){
+			
+			
+	var sb = this.sb
+	
+	var modCont = sb.sb_createElement('article')
+	sb.sb_addProperty(modCont,'class',options.class)
+	
+	return modCont
+		 
+	 
+ }
+
+Modal.prototype.createModalBody = function(options){
+	
+	 
+	 var sb = this.sb
+   
+   var body = sb.sb_createElement('div')
+   sb.sb_addProperty(body,'class',options.class)
+//    sb.sb_addChild(body,options.content)
+   sb.sb_addChild(body,options.body)
+   
+//    switch(options.size){
+   	
+//    	  case 1:{
+   	  	
+   	  	 
+//    	  }
+   	
+//    }
+	 
+	 return body
+
+	
+}
+
+
+Modal.prototype.createModalFoot = function(options){
+	
+	 
+	 var sb = this.sb
+   
+   var foot = sb.sb_createElement('div')
+   var btn = sb.sb_createElement('span')
+   sb.sb_addProperty(foot,'class',options.class)
+   sb.sb_addProperty(btn,'class',options.child.class)
+   sb.sb_insertInner(btn,options.buttonText)
+   sb.sb_addChild(foot,btn)
+  
+	 return {foot: foot,close: btn }
+
+	
+}
+
+Modal.prototype.handleCreateModal = function(data){
+
+	console.log('Create Modal event event event has occured')
+	console.log(data)
+	this.createModal(data)
+
+}
+
+Modal.prototype.createModal = function(data){
+
+	var sb = this.sb
+
+	if(data.length > 0){
+
+		for(var modal=0; modal < data.length; modal++){
+
+
+
+			var parent = this.getParent(data[modal].parent)
+			var modCont = this.createModalContent(data[modal].content)
+
+			if(data[modal].head.head){ 
+		
+				var head = this.createModalHead(data[modal].head)
+				sb.sb_addChild(modCont,head.head)
+				
+				sb.sb_addEvent(head.close,'click',this.closeModal.bind(this,parent,head.close))
+				
+			}
+			
+			if(data[modal].foot.foot){ 
+				
+				var foot = this.createModalFoot(data[modal].foot)
+				// sb.sb_addChild(parent,foot.foot)
+				sb.sb_addEvent(foot.close,'click',this.closeModal.bind(this,parent,foot.close))
+			}
+
+			var body = this.createModalBody(data[modal].body) 
+		
+			
+			sb.sb_addChild(modCont,body)
+			sb.sb_addChild(parent,modCont)
+
+			if(foot){
+				
+				sb.sb_addChild(modCont,foot.foot)
+			}
+			
+			sb.sb_addEvent(window,'click',this.closeModal.bind(this,parent,null))
+			sb.sb_addEvent(data[modal].activator.activate,'click',this.openModal.bind(this,parent))
+			console.log('modal parent')
+			console.log(parent)
+			this.emit({type: 'component-resource-creation-done',data: parent})
+
+
+
+		}
+
+
+	}
+	
+	
+	
+	
+
+}
+
+Modal.prototype.openModal = function(data,ev){
+
+	var sb = this.sb
+	sb.sb_stopEventBubble(ev)
+	console.log('The modal open func')
+	console.log(data)
+	
+	var computedStyle = document.defaultView.getComputedStyle(data,null);
+	console.log(computedStyle.display)
+
+	// var classList = sb.sb_getClasses(data)
+	// sb.sb_toggleClass(classList,'d-none')
+
+	if(computedStyle.display === 'none'){
+
+		data.style.display = "block"
+		console.log('Element style now')
+		console.log(data.style.display)
+	}
+	
+ 
+}
+
+
+Modal.prototype.closeModal = function(data,targ,ev){
+
+	var sb = this.sb 
+
+	 console.log('The code gets at this point')
+	// console.log(ev)
+	
+	// console.log('data')
+	// console.log(data)
+	// console.log('data.parent')
+	// console.log(data.parent)
+	if(ev.target === data){
+		
+		console.log('The events is initiated by the window')
+
+		// var classList = sb.sb_getClasses(data)
+
+		if(data.style.display === 'block'){
+
+			// console.log('The code gets here')
+			// console.log(sb.sb_hasClass(classList,'d-none'))
+			// sb.sb_toggleClass(classList,'d-none')
+
+			console.log('We are setting none')
+			data.style.display = 'none'
+
+		}
+		
+		
+	}else if(ev.target === targ){
+		
+
+		if(data.style.display === 'block'){
+
+			// console.log('The code gets here')
+			// console.log(sb.sb_hasClass(classList,'d-none'))
+			// sb.sb_toggleClass(classList,'d-none')
+
+			console.log('We are setting none')
+			data.style.display = 'none'
+
+		}
+		// var classList = sb.sb_getClasses(data)
+		// // sb.sb_toggleClass(classList,'d-none')
+		// console.log('The code inside the closeModal runs')
+
+		// if(data.style.display === 'block'){
+
+		// 	data.style.display = 'none'
+		// }
+	}
+	
+ 
+
+}
+	
+
+
+	
+
+			
 
 
 
