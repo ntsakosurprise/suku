@@ -2560,6 +2560,9 @@ var SUKU = (function(){
 
 			}else{
 
+				console.log('SUKU DATA TO THE SERVER')
+				console.log(requestData)
+
 				xhr.send(requestData);
 
 

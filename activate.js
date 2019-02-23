@@ -40,7 +40,12 @@ var activator = (function(){
 						dashboard: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata],
 						menulist: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata],
 						detail: [Preloader,Requery,Messenger,Component,Render,List,Accordion,Modal,Cart,Navigata],
-						bargain: [Preloader,Requery,Messenger,Component,Render,Accordion,Modal,Cart,Navigata]
+						bargain: [Preloader,Requery,Messenger,Component,Render,Accordion,Modal,Cart,Navigata],
+						register: [Requery,Messenger,Render,Register],
+						login: [Requery,Messenger,Render,Login],
+						uprofile: [Preloader,Requery,Messenger,Component,Render]
+
+
 					}
 				},
 				

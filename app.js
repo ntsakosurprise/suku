@@ -33,7 +33,7 @@ var app = {
         var logbtn = document.getElementById('login-btn')
         logbtn.addEventListener('click',function(){
 
-            window.location.href = 'bargain.html'
+            window.location.href = 'register.html'
 
         },false)
        

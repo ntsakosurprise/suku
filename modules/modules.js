@@ -1,5 +1,6 @@
 
 
+
 function Search(sandbox){
 
 
@@ -66,93 +67,390 @@ Search.prototype.destroy = function(){
 
 =======================================================================================================*/
 
-
-function Register(sandbox){
-
-
-	this.sandbox = sandbox;
-
+function Register(sandbox) {
 	
-
-}// End of search module
-
-
-
+	this.sb = sandbox
+	
+}
 
 Register.prototype.init = function(){
+	
+	 console.log('The register module is initiated')
+	 this.setUpRegister()
+	
+}
 
-
-		var formData = this.sandbox.sb_getChildById('#register-form');
-
+Register.prototype.emit = function(eNotifs){
+	
+	   var sb = this.sb 
+		console.log(eNotifs)
+	
+		sb.sb_notifyEvent({
 		
-		var subBtn = this.sandbox.sb_getChildById('#sub');
+		      type: eNotifs.type,
+		      data: eNotifs.data
+		
+	     })
+}
 
-		this.sandbox.sb_addEvent(subBtn,'click',handler);
-
-		var sb = this.sandbox;
-
-		function handler(evt){
-
-			sb.sb_preventNormal(evt);
-
-			var data = {
-
-				username: 'Victor',
-				email: 'Victor@gmail.com',
-				password: '1234'
-			}
-
-			//window.alert(typeof sb.sb_jsToJson(data));
-
-			//var validateResult = sb.sb_validate('Mashele Surprise, validate');
-
-			sb.sb_ajaxPost('/kokapix/register',sb.sb_jsToJson(data),success,fail,'application/json');
-
-			function fail(err){
+Register.prototype.messenger = function(data){
+	
+	this.emit({type: 'retrieve-data',data: data })
+  
+}
 
 
-				window.alert('FAIL: '+ err);
+Register.prototype.setUpRegister = function(){
+	
+	 
+	var sb = this.sb
+	var registerT = sb.sb_getChildById('#register')
+	sb.sb_addEvent(registerT,'click',this.handleRegister.bind(this))
 
-			}
+	
+}
 
-			function success(data){
+Register.prototype.handleRegister = function(ev){
+	
+	 var sb = this.sb 
 
-
-				var dataJS = sb.sb_jsonToJs(data);
-				window.alert('This is successful callback '+ dataJS.message);
-
-
-				if(dataJS.linkText){
-
-					var el = sb.sb_getById('register');
-
-					var lk = sb.sb_createElement('a');
-
-					sb.sb_insertInner(lk,'Confirm Account');
-					sb.sb_addProperty(lk,'href',dataJS.linkText);
-					sb.sb_addChild(el,lk);
-
-
-				}
-				
+	 sb.sb_preventNormal(ev)
+	 this.getRegisterData()
+	
+	
+}
 
 
-			}
-			
-		}
+Register.prototype.getRegisterData = function(){
+	
+	var sb = this.sb
+  
+	var register = sb.sb_getChildById('#register-data')
 
+	console.log('register form')
+	console.log(register.email.value)
+	
+	var registerData = {
+		
+		username: register.username.value,
+		password: register.password.value,
+		email: register.email.value
+		
+	}
+	
+	registerData = sb.sb_jsToJson(registerData)
+
+	var url = 'http://localhost:3000/smarfo/register'
+
+	success = this.sucess 
+	fail = this.fail
+	type = 'json'
+	method = 'post'
+	
+	this.messenger({url: url,data:registerData,success: success.bind(this),fail: fail.bind(this),type: type,method:method})
+   
+   
+}
+
+
+
+
+
+Register.prototype.sucess = function(data){
+	
+	var sb = this.sb 
+
+	var response = sb.sb_jsonToJs(data)
+
+	
+	if(response.registered){
+		
+		console.log('Successful registration')
+		this.setRegister(response)
+
+
+	}else{
+		
+		// this.respondRegister(data)
+
+		console.log('Register')
+		console.log(data)
+		console.log('An issue has occured')
+		
+	}
+	
+	 
+	
+}
+
+Register.prototype.fail = function(data){
+	
+	  var sb = this.sb 
+	
+  
+	 
+	//   var resEl = sb.sb_getChildById('#response')
+	//   resEl.innerHTML = 'An error occured,request could not be completed,please tey again'
+	//   this.emit({type: 'log-error',data: data})
+
+	console.log('The registration error')
+	console.log(data)
 		
 
-		
+}
+
+Register.prototype.redirect = function(){
+	  
+	  
+	  window.location.href = "login.html"
+
+}
+
+Register.prototype.setRegister = function(data){
+	  
+	  var sb = this.sb 
+	  var login = {
+			 username: data.username
+	  }
+	  
+	  localStorage.setItem('login',sb.sb_jsToJson(login))
+	  console.log('LocalStorage data')
+	  console.log(localStorage.login)
+	  this.redirect()
 
 
 }
 
-Register.prototype.destroy = function(){
+
+Register.prototype.respondRegister = function(data){
+	  
+	  
+	  var resEl = sb.sb_getChildById('#response')
+	  
+	    resEl.innerHTML = data.message
+	  	
+
+}
 
 
+function Login(sandbox){
+	
+	this.sb = sandbox
+	
+}
+
+Login.prototype.init = function(){
+	
+	 this.setUpLogin()
+	
+}
+
+Login.prototype.emit = function(eNotifs){
+
+	var sb = this.sb 
+	console.log(eNotifs)
+
+	sb.sb_notifyEvent({
+	
+			type: eNotifs.type,
+			data: eNotifs.data
+	
+		})
+	
+}
+
+Login.prototype.messenger = function(data){
+	
+	this.emit({type: 'retrieve-data',data: data })
+  
+}
+
+
+Login.prototype.setUpLogin = function(){
+	
+	 
+	var sb = this.sb
+	
+	var loginT = sb.sb_getChildById('#login')
+	
+	sb.sb_addEvent(loginT,'click',this.handleLogin.bind(this))
+
+	
+}
+
+Login.prototype.handleLogin = function(ev){
+	
+	var sb = this.sb
+	console.log('Handle login')
+	 sb.sb_preventNormal(ev)
+	 this.getLoginData()
+	
+	
+}
+
+
+Login.prototype.getLoginData = function(){
+	
+	var sb = this.sb
+  
+  var login = sb.sb_getChildById('#login-data')
+  
+  console.log('Login Data')
+  console.log(login)
+   var loginData = {
+   	
+   	    username: login.email.value,
+   	    password: login.password.value
+   	
+   }
+   
+   loginData = sb.sb_jsToJson(loginData)
+   var url = 'http://localhost:3000/smarfo/login'
+
+   success = this.success 
+   fail = this.fail
+   type = 'json'
+   method = 'post'
+   
+   this.messenger({url: url,data:loginData,success: success.bind(this),fail: fail.bind(this),type: type,method:method})
+   
+	 
+	
+	
+}
+
+
+Login.prototype.success = function(data){
+	
+	var sb = this.sb 
+	
+	var response = sb.sb_jsonToJs(data)
+
+	
+	if(response.registered){
+		
+		console.log('Successful Login')
+		this.setLogin(response)
+
+
+	}else{
+		
+		// this.respondRegister(data)
+
+		console.log('Login')
+		console.log(data)
+		console.log('An issue has occured')
+		
+	}
+	
+	 
+	
+}
+
+Login.prototype.fail = function(data){
+	
+	var sb = this.sb 
+	
+  
+	 
+	  var resEl = sb.sb_getChildById('#response')
+	  
+	    resEl.innerHTML = 'An error occured,request could not be completed,please try again'
+	    
+	    // this.emit({type: 'log-error',data: data})
 		
 
+}
+
+Login.prototype.redirect = function(){
+	  
+	  
+	  window.location.href = "dashboard.html"
+
+}
+
+Login.prototype.setLogin = function(data){
+	  
+	var sb = this.sb
+	  var login = {
+	  	
+	     	username: data.username
+	  	
+	  }
+	  
+	  localStorage.setItem('login',sb.sb_jsToJson(login))
+	  this.redirect()
+
+
+}
+
+
+Login.prototype.respondLogin = function(data){
+	  
+	  
+	  var resEl = sb.sb_getChildById('#response')
+	  
+	    resEl.innerHTML = data.message
+	  	
+
+}
+
+function Logout(sandbox){
+	
+	this.sb = sandbox
+	
+}
+
+Logout.prototype.init = function(){
+	
+	 this.setUpLogOut()
+	
+}
+
+Logout.prototype.listens = function(){
+	
+	var sb = this.sb 
+	sb.sb_notifyListen({
+		
+		 'log-out' : this.handleLogOut.bind(this)
+		
+	})
+}
+
+Logout.prototype.setUpLogOut = function(){
+	
+	 
+	var sb = this.sb
+	
+	// var loginT = sb.sb_getChildById('#login')
+	sb.sb_addEvent(sb.view,'click',this.handleLogOut.bind(this))
+
+	
+}
+
+Logout.prototype.handleLogOut = function(ev){
+	
+	 this.unsetLogout()
+	
+}
+
+
+Logout.prototype.redirect = function(){
+	  
+	  
+	  window.location.href = "app.html"
+
+}
+
+Logout.prototype.unsetLogout = function(){
+	  
+	  if(localStorage.login){
+	  	
+	  	 localStorage.removeItem('login')
+	  	 this.redirect()
+	  	
+	  }
+	  
 }
 
 
@@ -1397,11 +1695,28 @@ Messenger.prototype.init = function(){
 	
 }
 
-Messenger.prototype.send = function(url,data,success,fail){
+Messenger.prototype.send = function(data){
 	
 	var sb = this.sb 
 	
-	sb.sb_ajaxGet(url,data,success,fail)
+	if(data.method === 'post'){
+
+		if(data.data.type){
+
+			sb.sb_ajaxPost(data.data.url,data.data.data,data.data.success,data.data.fail,data.data.type)
+		}else{
+
+			sb.sb_ajaxPost(data.data.url,data.data.data,data.data.success,data.data.fail)
+
+
+		}
+		
+	}else{
+
+		sb.sb_ajaxGet(data.data.url,data.data.data,data.data.success,data.data.fail)
+
+	}
+	
 	
 }
 
@@ -1432,23 +1747,40 @@ Messenger.prototype.emit = function(eNotifs){
 
 }
 
-Messenger.prototype.formatRQ = function(evInfo){
+Messenger.prototype.formatRQ = function(data){
 	
 	var sb = this.sb 
+
+	 if(data.method){
+
+		if(data.method === 'post'){
+
+			this.send({method:'post',data})
+
+		}else{
+
+			this.send({method:'get',data})
+
+		}
+
+	 }else{
+
+		this.send({method:'get',data})
+	 }
 	
-	console.log('Inside formatRQ retrieve data')
-	console.log(evInfo)
-	var url = evInfo.url
-	if(evInfo.data.data){
+	// console.log('Inside formatRQ retrieve data')
+	// console.log(evInfo)
+	// var url = evInfo.url
+	// if(evInfo.data.data){
 		
-		var data = evInfo.data.data 
+	// 	var data = evInfo.data.data 
 		
-		this.send(url,data,evInfo.success,evInfo.fail)
-	}else{
+	// 	this.send(url,data,evInfo.success,evInfo.fail)
+	// }else{
 		
-		this.send(url,'data',evInfo.success,evInfo.fail)
+	// 	this.send(url,'data',evInfo.success,evInfo.fail)
 		
-	}
+	// }
 	
 }
 
@@ -1926,7 +2258,7 @@ Component.prototype.dashboard = function(data){
 	var menulist = sb.sb_createElement('article')
 	 sb.sb_addProperty(menulist,'class','top-offset-vh-x-tn pos-rel mg-bottom-fd-hg')
 	//url = 'https://smarfoapi.herokuapp.com/smarfo/menu' 
-	var url = 'https://smarfoapi.herokuapp.com/smarfo/menu' 
+	var url = 'http://localhost:3000/smarfo/menu' 
 
 	this.messenger({url: url,data:'data',success: success.bind(this),fail: fail.bind(this)})
 
@@ -2410,25 +2742,17 @@ Component.prototype.bargain = function(data){
 		 var bPercentP = sb.sb_createElement('span')
 		 var bPercentO = sb.sb_createElement('span')
 
-		// var actionsCart = sb.sb_createElement('section')
-		// var customise = sb.sb_createElement('div')
-		// var customiseBtn = sb.sb_createElement('button')
-		// var actionsCartForm = sb.sb_createElement('form')
-		// var minus = sb.sb_createElement('input')
-		// var update = sb.sb_createElement('input')
-		// var add = sb.sb_createElement('input')
-		// var inputId = sb.sb_createElement('input')
-		// var inputPrice = sb.sb_createElement('input')
-		// var inputName = sb.sb_createElement('input')
+		var customiseBtn = sb.sb_createElement('button')
+	
 
 		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg top-offset-vh-xx-tn mg-bottom-fd-hg pos-rel')
 		sb.sb_addProperty(product,'class','hr-size-fl-x-bg pos-rel top-offset-vh-bt mg-auto mg-bottom-fd-tn')
 		sb.sb_addProperty(productI,'src','img/starters/'+data.image)
 		sb.sb_addProperty(productI,'class','hr-size-fl-xx-bg')
 		sb.sb_addProperty(bInfo,'class','hr-size-fl-xx-bg mg-bottom-fd-tn')
-		sb.sb_addProperty(bName,'class','hr-size-fl-xx-bg font-fd-x-tn')
-		sb.sb_addProperty(bPercent,'class','hr-size-fl-xx-bg hr-size-fd-md text-align-center pos-abs left-offset-fl-md bd-rad-fl-md bg-secondary vt-size-fd-bt')
-		sb.sb_addProperty(bPercentC,'class','d-block pos-rel top-offset-fl-tn fg-light')
+		sb.sb_addProperty(bName,'class','hr-size-fl-xx-bg mg-top-fd-xx-tn font-fd-x-tn')
+		sb.sb_addProperty(bPercent,'class','hr-size-fd-xx-bg top-offset-vh-tn text-align-center pos-abs left-offset-fl-lg bd-rad-fl-md bg-secondary vt-size-fd-xxx-tn')
+		sb.sb_addProperty(bPercentC,'class','d-block pos-rel top-offset-fl-xx-sm font-fd-x-tn fg-light')
 		sb.sb_addProperty(bPercentP,'class','d-block')
 		sb.sb_addProperty(bPercentO,'class','d-block')
 		sb.sb_addProperty(bargain,'class','hr-size-fl-xx-bg pos-rel  mg-auto mg-top-fd-tn mg-bottom-fd-tn')
@@ -2448,342 +2772,30 @@ Component.prototype.bargain = function(data){
 		sb.sb_addChild(bargain,bPrice)
 
 		sb.sb_addChild(bInfo,bName)
-		sb.sb_addChild(bInfo,bPercent)
+		 sb.sb_addChild(bInfo,customiseBtn)
 		sb.sb_addChild(bPercentC,bPercentP)
 		sb.sb_addChild(bPercentC,bPercentO)
 		sb.sb_addChild(bPercent,bPercentC)
 		
 		
-		// sb.sb_addProperty(actions,'class','pos-fd hr-size-fl-xx-bg bx-shadow bottom-offset-0 bg-light pd-top-fd-xxx-sm pd-bottom-fd-xx-tn z-index')
-		// sb.sb_addProperty(actionsCustomise,'class','pos-rel hr-size-fl-sm d-inline-block')
-		// sb.sb_addProperty(actionsCart,'class','pos-rel hr-size-fl-md d-inline-block')
-		// sb.sb_addProperty(customiseBtn,'class','d-inline-block mg-left-fl-xxx-tn  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-rel btn bg-secondary fg-light')
-		// sb.sb_insertInner(customiseBtn,'Customise')
-		// sb.sb_addProperty(actionsCartForm,'class','pos-rel left-offset-0')
-		// sb.sb_addProperty(minus,'class','d-inline-block hr-size-fl-xxx-sm cursor-pointer vt-size-fd-bt  bg-light bd-top-left-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center font-wt-bolder font-fd-xx-tn')
-		// sb.sb_addProperty(minus,'type','button')
-		// sb.sb_addProperty(minus,'value','-')
-		// sb.sb_addProperty(minus,'name','remove_product')
-		// sb.sb_addEvent(minus,'click',tools.events.removeFromCart.bind(tools))
-		// sb.sb_addProperty(update,'class','vt-size-fd-bt d-inline-block hr-size-fl-xxx-sm pd-fd-xx-tn bg-light bd-fd-secondary-xx-bt')
-		// sb.sb_addProperty(update,'type','number')
-		// sb.sb_addProperty(update,'placeholder','0')
-		// sb.sb_addProperty(update,'name','product_qty')
-		// sb.sb_addEvent(update,'input',tools.events.updateCart.bind(tools))
-		// sb.sb_addProperty(add,'class','d-inline-block hr-size-fl-xxx-sm cursor-pointer vt-size-fd-bt  bg-light bd-bottom-right-rad-fd-xx-bt bd-top-right-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center font-wt-bolder font-fd-xx-tn')
-		// sb.sb_addProperty(add,'type','button')
-		// sb.sb_addProperty(add,'value','+')
-		// sb.sb_addProperty(add,'name','add_product')
-		// sb.sb_addEvent(add,'click',tools.events.addToCart.bind(tools))
-		
-		// sb.sb_addProperty(inputId,'type','hidden')
-		// sb.sb_addProperty(inputId,'name','product_id')
-		// sb.sb_addProperty(inputId,'value','sampleid')
-
-		// sb.sb_addProperty(inputPrice,'type','hidden')
-		// sb.sb_addProperty(inputPrice,'name','product_price')
-		// sb.sb_addProperty(inputPrice,'value','sampleprice')
-
-		
-		// sb.sb_addProperty(inputName,'type','hidden')
-		// sb.sb_addProperty(inputName,'name','product_name')
-		// sb.sb_addProperty(inputName,'value','sampleproducts')
-
+	
+		sb.sb_addProperty(customiseBtn,'class','d-inline-block action-btn hr-size-fl-x-tn  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-fd btn bg-secondary fg-light')
+		sb.sb_insertInner(customiseBtn,'Order Now')
+	
 
 
 		sb.sb_addChild(productP,product)
 		sb.sb_addChild(product,productI)
+		sb.sb_addChild(product,bPercent)
 		sb.sb_addChild(product,bInfo)
-		// sb.sb_addChild(actions,actionsCustomise)
-		// sb.sb_addChild(actions,actionsCart)
-		// // sb.sb_addChild(actions,actionsCustomise)
-		// sb.sb_addChild(actionsCart,actionsCartForm)
-		// sb.sb_addChild(actionsCartForm,minus)
-		// sb.sb_addChild(actionsCartForm,update)
-		// sb.sb_addChild(actionsCartForm,add)
-		// sb.sb_addChild(actionsCartForm,inputId)
-		// sb.sb_addChild(actionsCartForm,inputPrice)
-		// sb.sb_addChild(actionsCartForm,inputName)
-		// sb.sb_addChild(actionsCustomise,customise)
-		// sb.sb_addChild(customise,customiseBtn)
-		// sb.sb_addChild(productP,actions)
-		
-		// for(p in data){
-
-		// 	if(!(p === 'image' || p === 'variants')){
-
-
-		// 		this.emit({type: 'create-accordion',data:{
-
-		// 			parent: productP,
-		// 			title: p,
-		// 			data: data[p]
-
-
-		// 		}})
-
-		// 	}
-		// }
-
-
-		// // Accordion
-
-		//  var desc = sb.sb_createElement('div')
-		//  var ing = sb.sb_createElement('ul')
-		//  sb.sb_addProperty(ing,'class','list list--hr list--none')
-		//  sb.sb_addProperty(desc,'class','accordion__content d-none hr-size-fl-x-bg mg-auto accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn')
-		//  sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-x-b mg-auto accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
-		//   sb.sb_insertInner(desc,data.description)
-
-		// // Modal
-
-		//  var modalList = sb.sb_createElement('ul')
-		//  var modals = []
-		//  sb.sb_addProperty(modalList,'class','list list--hr list--none')
-		// //  var ing = sb.sb_createElement('div')
-		// //  sb.sb_addProperty(desc,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn')
-		// //  sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
-		// //   sb.sb_insertInner(desc,data.description)
-
-		// for(var i = 0; i < data.ingredients.length; i++){
-
-		// 	var li = sb.sb_createElement('li')
-		// 	var sp = sb.sb_createElement('span')
-		// 	sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small cursor-pointer pd-left-fd-tn pd-top-fd-bt')
-		// 	sb.sb_addProperty(sp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
-
-		// 	sb.sb_insertInner(sp,data.ingredients[i])
-		// 	sb.sb_addChild(li,sp)
-		// 	sb.sb_addChild(ing,li)
-
-		// }
-		
-
-		//  for(v in data.variants){
-
-		// 	 var li = sb.sb_createElement('li')
-		// 	 var sp = sb.sb_createElement('span')
-
-		// 	 sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small cursor-pointer pd-left-fd-tn pd-top-fd-bt')
-
-		// 	 sb.sb_addProperty(sp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
-		// 	 console.log('v')
-		// 	 console.log(typeof v)
-		// 	 if(v.trim() === "drinks"){sb.sb_insertInner(sp,'Drink Choice')}else{sb.sb_insertInner(sp,v)}
+	
 			
-		// 	 sb.sb_addChild(li,sp)
-
-		// 	 sb.sb_addChild(modalList,li)
-
-		// 	 var modal = {}
-		// 	 var optionsForm = sb.sb_createElement('form')
-		// 	 var optionList = sb.sb_createElement('ul')
-		// 	 sb.sb_addProperty(optionsForm,'class','form')
-		// 	 sb.sb_addProperty(optionList,'class','list list--hr list--none')
-
-		// 	 sb.sb_addChild(optionsForm,optionList)
-
-		// 	 for(it in data.variants[v]){
-
-		// 		var uli = sb.sb_createElement('li')
-		// 		var usp = sb.sb_createElement('span')   
-		// 		var updator = sb.sb_createElement('input')
-		// 		var updatorLabel = sb.sb_createElement('label')
-		// 		var updatorLabelSp = sb.sb_createElement('span')
-		// 		var uinputId = sb.sb_createElement('input')
-		// 		var uinputPrice = sb.sb_createElement('input')
-		// 		var uinputName = sb.sb_createElement('input')
-		// 		var radioCont = sb.sb_createElement('div')
-		// 		var idCont = sb.sb_createElement('div')
-		// 		var priceCont = sb.sb_createElement('div')
-
-		// 		sb.sb_addProperty(uli,'class','list__item form__radio__group list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small d-block hr-size-fl-bg cursor-pointer pd-left-fd-tn pd-top-fd-bt')
-		// 		sb.sb_addProperty(usp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
-				
-		// 		sb.sb_addProperty(updator,'type','radio')
-		// 		sb.sb_addProperty(updator,'name','updator')
-		// 		sb.sb_addProperty(updator,'id','updator')
-		// 		sb.sb_addProperty(updator,'value','value')
-		// 		sb.sb_addProperty(updator,'class','form__radio__group')
-
-		// 		sb.sb_addProperty(updatorLabel,'type','label')
-		// 		sb.sb_addProperty(updatorLabel,'for','updator')
-		// 		sb.sb_addProperty(updatorLabel,'class','form__radio__label')
-		// 		sb.sb_addProperty(updatorLabelSp,'class','form__radio__button')
-
-
-		// 		sb.sb_addProperty(uinputId,'type','hidden')
-		// 		sb.sb_addProperty(uinputId,'name','product_id')
-		// 		sb.sb_addProperty(uinputId,'value','sampleid')
-		
-		// 		sb.sb_addProperty(uinputPrice,'type','hidden')
-		// 		sb.sb_addProperty(uinputPrice,'name','product_price')
-		// 		sb.sb_addProperty(uinputPrice,'value','sampleprice')
-		
-				
-		// 		sb.sb_addProperty(uinputName,'type','hidden')
-		// 		sb.sb_addProperty(uinputName,'name','product_name')
-		// 		sb.sb_addProperty(uinputName,'value','sampleproducts')
-
-		// 		sb.sb_addProperty(radioCont,'class','d-inline-block pd-left-fl-x-bt hr-size-fl-xxx-sm')
-		// 		sb.sb_addProperty(idCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
-		// 		sb.sb_addProperty(priceCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
-
-			
-		// 		sb.sb_insertInner(idCont,'sample')
-		// 		sb.sb_insertInner(priceCont,'R854')
-
-		// 		sb.sb_addChild(optionList,uli)
-		// 		sb.sb_addChild(uli,radioCont)
-		// 		sb.sb_addChild(uli,idCont)
-		// 		sb.sb_addChild(uli,priceCont)
-		// 		sb.sb_addChild(updatorLabel,updatorLabelSp)
-		// 		sb.sb_addChild(updator,updatorLabel)
-		// 		sb.sb_addChild(radioCont,updator)
-			
-
-		// 	 }
-
-		// 	 modal.activator = {
-
-		// 		activate: li
-		// 	 },
-		// 	 modal.parent ={
-
-		// 		class: 'modal',
-		// 		id: v
-
-		// 	}
-		// 	 modal.body = {
-
-		// 		body:  optionsForm,
-		// 		class: 'modal__body'
-				
-		// 		}
-		// 	 modal.head = {
-		// 		 head: true,
-		// 		 buttonText: 'Done',
-		// 		 title: v,
-		// 		 class: 'modal__head ',
-		// 		 child: {
-
-		// 			class: 'modal__close-top-btn bx-shadow  modal__button close-modal'
-		// 		 }
-				
-		// 	 }
-		// 	 modal.foot = {
-		// 		foot: true,
-		// 		buttonText: 'Done',
-		// 		class: 'modal__foot pos-fd bottom-offset-0 ',
-		// 		child: {
-
-		// 			class: 'modal__button modal__close-bottom-btn hr-size-fl-xx-bg font-fd-x-tn bx-shadow d-block mg-auto close-modal'
-		// 		 }
-				
-				
-		// 	}
-		// 	modal.content = {
-
-		// 		class: 'modal__content modal__content--size-fl-xx-bg vt-size-flv-xx-bg modal__content--pos-rel modal__content--left-offset-0 modal__content--bg-light'
-
-		// 	}
-		// 	 modals.push(modal)
-
-		//  }
-
-
-		// var accordionData = {
-
-		// 	 'description':{
-
-		// 		parent: productP,
-		// 		title: 'Description',
-		// 		content: desc
-				
-				
-		// 	 },
-		// 	 'ingredients':{
-
-		// 		parent: productP,
-		// 		title: 'Ingredients',
-		// 		content: ing
-			
-				
-		// 	 }
-			 
-		// }
-		
-		// // Modal data
-
-		// modals.unshift({
-
-		// 	activator: {
-					
-		// 		activate: customiseBtn
-		// 	},
-		// 	parent:{
-
-		// 		class: 'modal',
-		// 		id: 'customise'
-
-		// 	},
-		// 	head: {
-		// 		head: false
-		// 	},
-		// 	content: {
-		// 		class: 'modal__content bd-top-right-rad-fd-xx-bt modal__content--size-fl-xxx-md modal__content--pos-abs modal__content--left-offset-0 modal__content--bottom-offset-0 modal__content--bd-rad-fd-tn modal__content--bg-light'
-		// 	},
-		// 	body: {
-		// 		body: modalList,
-		// 		class: 'modal__body'
-		// 	},
-		// 	foot: {
-		// 		foot: false
-		// 	}
-
-
-		// })
-
-		
-			
-		 
-		
-		
-		// this.emit({type:'create-accordion',data: accordionData})
-		// this.emit({type:'create-modal',data: modals})
+	
 		this.emit({type:'component-resource-creation-done',data: bargain})
 		this.emit({type:'component-resource-creation-done',data: productP})
 		
 
-		// console.log(data)
-		// console.log('The return json data')
-		// console.log(data)
-		// let menu = sb.sb_jsonToJs(data)
-		// if(menu.categories){
-
-		// 	menu = menu.categories
-		// }else{
-		// 	menu = menu.items
-		// }
-		// console.log('The js')
-		// console.log(menu)
-
-		// this.emit({type: 'create-list',data:{
-
-		// 	type: 'regular',
-		// 	data: menu,
-		// 	options: {
-
-		// 		image: true,
-		// 		src: 'img/starters/',
-		// 		styles:{
-
-		// 			class: 'top-offset-vh-xx-sm pos-rel'
-		// 		}
-		// 	},
-		// 	parent:  catlist
-
-		// }})
+		
 
 	}
 	
@@ -2800,6 +2812,277 @@ Component.prototype.bargain = function(data){
 	
 	
 }
+
+
+Component.prototype.uprofile = function(data){
+	  
+	var sb = this.sb
+
+	
+
+	// var catlist = sb.sb_createElement('article')
+	// console.log(data.data)
+	// var url = 'http://localhost:3000/smarfo/profile'
+
+	// var sdata = {
+
+	// 	menuitem: "Starters",
+	// 	item: data.data.item_id
+	// }
+
+	var loginData = sb.sb_jsonToJs(localStorage.getItem('login'))
+
+	var loginData = {
+   	
+	 	username: 'mashelesurprise@gmail.com',
+	 	password: '123456'
+	
+     }
+
+	loginData = sb.sb_jsToJson(loginData)
+	var url = 'http://localhost:3000/smarfo/user'
+
+	type = 'json'
+	method = 'post'
+
+	this.messenger({url: url,data:loginData,success: success.bind(this),fail: fail.bind(this),type: type,method:method})
+	
+
+	function success(data){
+
+		console.log('Successfull Bargain request')
+		console.log(data)
+	
+		var data = sb.sb_jsonToJs(data)
+		console.log(data)
+
+		var userData = {
+
+			email: data.data.email_address,
+			dob: data.data.birth_date,
+			gender: data.data.gender,
+			contact: data.data.mobile_number
+
+		}
+		
+		var productP = sb.sb_createElement('article')
+		var bargain = sb.sb_createElement('div')
+		var bTitle = sb.sb_createElement('h1')
+		var product = sb.sb_createElement('div')
+		var avCont = sb.sb_createElement('section')
+		var avFig = sb.sb_createElement('figure')
+		var avImg = sb.sb_createElement('img')
+		var uname = sb.sb_createElement('span')
+		var info = sb.sb_createElement('div')
+		var lst = sb.sb_createElement('ul')
+		var edit = sb.sb_createElement('div')
+		var editAvImg = sb.sb_createElement('img')
+		var editAvCont = sb.sb_createElement('div')
+		var editAvatar = sb.sb_createElement('img')
+		var name = data.data.first_name+' '+data.data.last_name
+		
+	
+	
+
+		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg top-offset-vh-bt mg-bottom-fd-hg pos-rel')
+		sb.sb_addProperty(bargain,'class','hr-size-fl-xx-bg pos-rel  mg-auto bg-tan vt-size-fd-bt mg-bottom-fd-tn')
+		sb.sb_addProperty(bTitle,'class','pd-left-fl-sm top-offset-fl-bt pd-top-fd-xx-tn  mg-bottom-fd-xxx-tn')
+		sb.sb_addProperty(edit,'class','pos-abs bd-rad-fl-md cursor-pointer top-offset-vh-tn left-offset-fl-xx-md bg-dk-green-lt vt-size-fd-bt hr-size-fd-md')
+		sb.sb_addProperty(editAvImg,'class','hr-size-fl-md cursor-pointer left-offset-fl-tn top-offset-fl-tn pos-rel')
+		sb.sb_addProperty(editAvImg,'src','img/edit.png')
+		sb.sb_addProperty(product,'class','hr-size-fl-x-bg pos-rel top-offset-vh-bt mg-auto mg-bottom-fd-tn')
+		sb.sb_addProperty(avCont,'class','avatar avatar--positon mg-left-fl-x-sm')
+		sb.sb_addProperty(avFig,'class','avatar__fig avatar__fig--hr-size-fd-hi-xx-bg avatar__fig--bd-rad-fl-md')
+		sb.sb_addProperty(avImg,'class','avatar__pik avatar__pik--hr-size-fd-hi-xx-bg')
+		sb.sb_addProperty(avImg,'src',data.data.profile_url)
+		sb.sb_addProperty(editAvCont,'class','pos-abs bd-rad-fl-md cursor-pointer top-offset-fl-tn left-offset-fl-md bg-dk-green vt-size-fd  hr-size-fd-xx-sm')
+		sb.sb_addProperty(editAvatar,'class','hr-size-fl-md left-offset-fl-tn top-offset-fl-tn pos-rel')
+		sb.sb_addProperty(editAvatar,'src','img/avataredit.png')
+		sb.sb_addProperty(uname,'class','d-inline-block font-fd-tn mg-top-fd-tn mg-bottom-fd-sm fg-secondary')
+		sb.sb_insertInner(bTitle,'Profile')
+		sb.sb_insertInner(uname,name)
+		sb.sb_addProperty(lst,'class','list list--hr list--none')
+
+
+		for(id in userData){
+
+			var li = sb.sb_createElement('li')
+			var lb = sb.sb_createElement('small')
+			var sp = sb.sb_createElement('span')
+			sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small pd-left-fd-tn pd-top-fd-bt')
+			sb.sb_addProperty(lb,'class','d-block mg-left-fl-tn mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary')
+			sb.sb_addProperty(sp,'class','mg-left-fl-tn d-block mg-top-fd-bt font-fd-x-tn')
+
+			sb.sb_insertInner(lb,id)
+			sb.sb_insertInner(sp,userData[id])
+			sb.sb_addChild(li,lb)
+			sb.sb_addChild(li,sp)
+			sb.sb_addChild(lst,li)
+
+		}
+
+
+		
+		
+	
+		// sb.sb_addProperty(customiseBtn,'class','d-inline-block action-btn hr-size-fl-x-tn  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-fd btn bg-secondary fg-light')
+		// sb.sb_insertInner(customiseBtn,'Order Now')
+	
+
+
+		sb.sb_addChild(productP,product)
+		sb.sb_addChild(bargain,bTitle)
+		sb.sb_addChild(edit,editAvImg)
+		sb.sb_addChild(product,avCont)
+		sb.sb_addChild(product,info)
+		sb.sb_addChild(avCont,avFig)
+		sb.sb_addChild(editAvCont,editAvatar)
+		sb.sb_addChild(avCont,editAvCont)
+		sb.sb_addChild(avCont,uname)
+		sb.sb_addChild(avFig,avImg)
+		sb.sb_addChild(info,lst)
+	
+			
+	
+		this.emit({type:'component-resource-creation-done',data: bargain})
+		this.emit({type:'component-resource-creation-done',data: edit})
+		this.emit({type:'component-resource-creation-done',data: productP})
+		
+
+		
+
+	}
+	
+
+	function fail(data){
+
+
+
+		console.log('Failed request')
+		console.log(data)
+		// this.emit({type: 'stop-preloader',data: data})
+
+	}
+	
+	
+}
+
+
+
+Component.prototype.manage = function(data){
+	  
+	var sb = this.sb
+
+	
+
+	// var catlist = sb.sb_createElement('article')
+	console.log(data.data)
+	var url = 'http://localhost:3000/smarfo/bargain'
+
+	// var sdata = {
+
+	// 	menuitem: "Starters",
+	// 	item: data.data.item_id
+	// }
+	this.messenger({url: url,data:'sdata',success: success.bind(this),fail: fail.bind(this)})
+	var tools = this.tools('detail')
+	
+
+	function success(data){
+
+		console.log('Successfull Bargain request')
+		console.log(data)
+	
+		var data = sb.sb_jsonToJs(data).detail
+		console.log(data)
+
+		
+		var productP = sb.sb_createElement('article')
+		var product = sb.sb_createElement('div')
+		var productI = sb.sb_createElement('img')
+		 var bargain = sb.sb_createElement('div')
+		 var bTitle = sb.sb_createElement('h1')
+		 var bTag = sb.sb_createElement('span')
+		 var bPrice = sb.sb_createElement('span')
+		 var bInfo = sb.sb_createElement('div')
+		 var bName = sb.sb_createElement('section')
+		 var bPercent = sb.sb_createElement('section')
+		 var bPercentC = sb.sb_createElement('div')
+		 var bPercentP = sb.sb_createElement('span')
+		 var bPercentO = sb.sb_createElement('span')
+
+		var customiseBtn = sb.sb_createElement('button')
+	
+
+		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg top-offset-vh-xx-tn mg-bottom-fd-hg pos-rel')
+		sb.sb_addProperty(product,'class','hr-size-fl-x-bg pos-rel top-offset-vh-bt mg-auto mg-bottom-fd-tn')
+		sb.sb_addProperty(productI,'src','img/starters/'+data.image)
+		sb.sb_addProperty(productI,'class','hr-size-fl-xx-bg')
+		sb.sb_addProperty(bInfo,'class','hr-size-fl-xx-bg mg-bottom-fd-tn')
+		sb.sb_addProperty(bName,'class','hr-size-fl-xx-bg mg-top-fd-xx-tn font-fd-x-tn')
+		sb.sb_addProperty(bPercent,'class','hr-size-fd-xx-bg top-offset-vh-tn text-align-center pos-abs left-offset-fl-lg bd-rad-fl-md bg-secondary vt-size-fd-xxx-tn')
+		sb.sb_addProperty(bPercentC,'class','d-block pos-rel top-offset-fl-xx-sm font-fd-x-tn fg-light')
+		sb.sb_addProperty(bPercentP,'class','d-block')
+		sb.sb_addProperty(bPercentO,'class','d-block')
+		sb.sb_addProperty(bargain,'class','hr-size-fl-xx-bg pos-rel  mg-auto mg-top-fd-tn mg-bottom-fd-tn')
+		sb.sb_addProperty(bTitle,'class','pos-abs  left-offset-fl-md  mg-bottom-fd-xxx-tn')
+		sb.sb_addProperty(bTag,'class',' pos-abs d-block left-offset-fl-x-bt top-offset-vh-bt mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary')
+		sb.sb_addProperty(bPrice,'class','pos-abs d-block left-offset-fl-bt top-offset-vh-xxx-tn font-fd-tn')
+		sb.sb_insertInner(bTitle,'Grab our daily bargain')
+		sb.sb_insertInner(bTag,'Only')
+		sb.sb_insertInner(bPrice,data.price)
+		sb.sb_insertInner(bName,data.name)
+		sb.sb_insertInner(bPercentP,data.percent)
+		sb.sb_insertInner(bPercentO,'off')
+
+
+		sb.sb_addChild(bargain,bTitle)
+		sb.sb_addChild(bargain,bTag)
+		sb.sb_addChild(bargain,bPrice)
+
+		sb.sb_addChild(bInfo,bName)
+		 sb.sb_addChild(bInfo,customiseBtn)
+		sb.sb_addChild(bPercentC,bPercentP)
+		sb.sb_addChild(bPercentC,bPercentO)
+		sb.sb_addChild(bPercent,bPercentC)
+		
+		
+	
+		sb.sb_addProperty(customiseBtn,'class','d-inline-block action-btn hr-size-fl-x-tn  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-fd btn bg-secondary fg-light')
+		sb.sb_insertInner(customiseBtn,'Order Now')
+	
+
+
+		sb.sb_addChild(productP,product)
+		sb.sb_addChild(product,productI)
+		sb.sb_addChild(product,bPercent)
+		sb.sb_addChild(product,bInfo)
+	
+			
+	
+		this.emit({type:'component-resource-creation-done',data: bargain})
+		this.emit({type:'component-resource-creation-done',data: productP})
+		
+
+		
+
+	}
+	
+
+	function fail(data){
+
+
+
+		console.log('Failed request')
+		console.log(data)
+		// this.emit({type: 'stop-preloader',data: data})
+
+	}
+	
+	
+}
+
+
 
 
 

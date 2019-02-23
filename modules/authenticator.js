@@ -1,92 +1,78 @@
+function Authenticator (sandbox) {
+	
+	this.sb = sandbox
+	
+}
+
+Authenticator.prototype.init = function(){
+	
+	 
+	//  this.listens()
+	//  this.emit({type: 'authenticator-component',data:''})
+
+	this.checkAuthenticated()
+	
+}
 
 
-function processModules(modulesList){
+Authenticator.prototype.listens = function(){
+	
+	var sb = this.sb 
+	sb.sb_notifyListen({
+		
+		 'user-authenticated' : this.handleUserAuthenticates.bind(this),
+		 
+		
+	})
+}
 
+Authenticator.prototype.emit = function(eNotifs){
+	
+		var sb = this.sb 
+	
+	
+		
+		    sb.sb_notifyEvent({
+		
+		      type: eNotifs.type,
+		      data: eNotifs.data
+		
+	     })
+		
 
+}
 
-	var appCore = new CORE(),
-		appSandbox = new SANDBOX(appCore),
+Authenticator.prototype.checkAuthenticated = function(){
+	
+	var sb = this.sb 
+	
+	 if(localStorage.login){
+	 	
+	 	  var login = sb.sb_jsonToJs(localStorage.getItem('login'))
+	 	 
+	 	 if(!login.username){
+	 	 	
+	 	 	  this.redirect()
+	 	 }
+	 	 	 
+	 	  
+	 }else{
+	 	 
+	 	  this.redirect()
+	 	
+	 }
+	
+}
 
+Authenticator.prototype.redirect = function(){
+	  
+	  
+	  window.location.redirect = "login.html"
 
-	modulesList = modulesList;
+}
 
+Authenticator.prototype.handleUserAuthenticated = function(eventInfo){
+	  
+	  this.messengerDone(eventInfo)
 
-	for(var modu=0; modu < modulesList.length; ++ modu){
-
-
-				var moduId = modulesList[modu].name.toLowerCase();
-				var modulesObj = SUKU.getAllBy_attribute('data-'+moduId);
-
-				
-
-					
-
-
-				if(modulesObj.length !== 0){
-					
-
-
-					for(var mOb=0; mOb < modulesObj.length; mOb++){
-
-						 var attribs = SUKU.get_element_attributes(modulesObj[mOb]);
-						 var modInstId = '';
-
-						 if(attribs.length > 0){
-
-
-							for(var a=0; a < attribs.length; a++){
-
-								var attName = attribs[a].name;
-
-								if(attName === 'data-'+moduId){
-
-									var attValue = attribs[a].value;
-
-									modInstId = attValue;
-
-
-										
-									break;
-								}
-
-							}
-
-						}// End of check attributes length if statement
-
-					
-
-						
-						appCore.createModule(
-
-							new modulesList[modu](appSandbox.create(moduId,modInstId)),
-							moduId,modInstId
-
-						);
-
-						appCore.startModule(moduId,modInstId);
-
-
-					}
-
-					
-
-				
-					
-
-
-				}// End of module existence test on a given context(page)*/
-
-				
-
-
-	}// End of for loop statement
-
-
-
-
-}// End of process modules function
-
-
-
-
-
+}
