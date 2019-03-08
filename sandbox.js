@@ -99,6 +99,15 @@ SANDBOX.prototype.create = function(moduleID,modInstId){
 
 			},
 
+			sb_getByTag: function(parent,selector){
+				
+					
+				return sb_core.dom.queryByTag(parent,selector);
+
+
+
+		},
+
 			sb_getByAttribute: function(attrib){
 				
 					
@@ -142,6 +151,26 @@ SANDBOX.prototype.create = function(moduleID,modInstId){
 					
 					
 				var el = sb_core.dom.createElement(selector);
+
+				return el;
+
+
+			},
+
+			sb_copyDeep: function(el){
+					
+					
+				var el = sb_core.dom.copyDeep(el);
+
+				return el;
+
+
+			},
+
+			sb_copyShallow: function(el){
+					
+					
+				var el = sb_core.dom.copyShallow(el);
 
 				return el;
 

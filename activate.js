@@ -37,13 +37,17 @@ var activator = (function(){
 					return {
 				
 						app: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata],
-						dashboard: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata],
-						menulist: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata],
+						dashboard: [Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata,Logout],
+						menulist: [Preloader,Requery,Messenger,Component,Render,List,Cart,Modal,Navigata],
 						detail: [Preloader,Requery,Messenger,Component,Render,List,Accordion,Modal,Cart,Navigata],
 						bargain: [Preloader,Requery,Messenger,Component,Render,Accordion,Modal,Cart,Navigata],
+						settings: [Authenticator,Preloader,Requery,Messenger,Component,Render,Accordion,Modal,Cart,Navigata],
 						register: [Requery,Messenger,Render,Register],
 						login: [Requery,Messenger,Render,Login],
-						uprofile: [Preloader,Requery,Messenger,Component,Render]
+						uprofile: [Authenticator,Preloader,Requery,Messenger,Component,Render],
+						kart: [Preloader,Requery,Messenger,Component,Render,Cart],
+						checkout: [Authenticator,Preloader,Requery,Messenger,Component,Render,Cart],
+						orderstatus: [Authenticator,Preloader,Requery,Messenger,Component,Render,List,Cart,Navigata]
 
 
 					}

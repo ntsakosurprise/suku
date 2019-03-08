@@ -88,8 +88,18 @@ SUKU.domLoaded(function(){
 		// console.log(dt)
 
 		// console.log(localStorage)
-		// localStorage.removeItem('detail')
-		localStorage.removeItem('cart')
+		//localStorage.removeItem('detail')
+		// localStorage.removeItem('cart')
+		 //localStorage.removeItem('login')
+		// localStorage.removeItem('order')
+		// localStorage.removeItem('ordercollects')
+		// console.log('The window object')
+		// console.log(window.location)
+		// console.log(window.location.origin)
+		// console.log(window.history)
+		// console.log(window.history.back)
+		// console.log(window.document)
+		// console.log(window.document.referrer)
 		activator.activate()
 
 

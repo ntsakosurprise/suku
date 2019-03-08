@@ -67,7 +67,7 @@ Authenticator.prototype.checkAuthenticated = function(){
 Authenticator.prototype.redirect = function(){
 	  
 	  
-	  window.location.redirect = "login.html"
+	  window.location.href = "login.html"
 
 }
 

@@ -1,4 +1,85 @@
 
+function Authenticator (sandbox) {
+	
+	this.sb = sandbox
+	
+	
+}
+
+Authenticator.prototype.init = function(){
+	
+	 
+	//  this.listens()
+	//  this.emit({type: 'authenticator-component',data:''})
+
+	this.checkAuthenticated()
+	
+	
+}
+
+
+Authenticator.prototype.listens = function(){
+	
+	var sb = this.sb 
+	sb.sb_notifyListen({
+		
+		 'user-authenticated' : this.handleUserAuthenticates.bind(this),
+		 
+		
+	})
+}
+
+Authenticator.prototype.emit = function(eNotifs){
+	
+		var sb = this.sb 
+	
+	
+		
+		    sb.sb_notifyEvent({
+		
+		      type: eNotifs.type,
+		      data: eNotifs.data
+		
+	     })
+		
+
+}
+
+Authenticator.prototype.checkAuthenticated = function(){
+	
+	var sb = this.sb 
+	
+	 if(localStorage.login){
+	 	
+	 	  var login = sb.sb_jsonToJs(localStorage.getItem('login'))
+	 	 
+	 	 if(!login.username){
+	 	 	
+	 	 	  this.redirect()
+	 	 }
+	 	 	 
+	 	  
+	 }else{
+	 	 
+	 	  this.redirect()
+	 	
+	 }
+	
+}
+
+Authenticator.prototype.redirect = function(){
+	  
+	  
+	window.location.href = "login.html"
+
+}
+
+Authenticator.prototype.handleUserAuthenticated = function(eventInfo){
+	  
+	  this.messengerDone(eventInfo)
+
+}
+
 
 
 function Search(sandbox){
@@ -163,7 +244,7 @@ Register.prototype.sucess = function(data){
 	var response = sb.sb_jsonToJs(data)
 
 	
-	if(response.registered){
+	if(response.isRegistered){
 		
 		console.log('Successful registration')
 		this.setRegister(response)
@@ -173,7 +254,7 @@ Register.prototype.sucess = function(data){
 		
 		// this.respondRegister(data)
 
-		console.log('Register')
+		console.log('Registration failed')
 		console.log(data)
 		console.log('An issue has occured')
 		
@@ -236,12 +317,15 @@ Register.prototype.respondRegister = function(data){
 function Login(sandbox){
 	
 	this.sb = sandbox
+	this.ref = window.document.referrer.split('/').pop().split('.')[0]
 	
 }
 
 Login.prototype.init = function(){
 	
 	 this.setUpLogin()
+	 console.log('The page on which auth runs')
+	console.log(this.ref)
 	
 }
 
@@ -299,13 +383,14 @@ Login.prototype.getLoginData = function(){
   console.log(login)
    var loginData = {
    	
-   	    username: login.email.value,
+   	    email: login.email.value,
    	    password: login.password.value
    	
    }
    
    loginData = sb.sb_jsToJson(loginData)
-   var url = 'http://localhost:3000/smarfo/login'
+   var url = 'https://smarfoapi.herokuapp.com/smarfo/login'
+//    var url = 'http://localhost:3000/smarfo/login'
 
    success = this.success 
    fail = this.fail
@@ -327,10 +412,11 @@ Login.prototype.success = function(data){
 	var response = sb.sb_jsonToJs(data)
 
 	
-	if(response.registered){
+	if(response.isvalid){
 		
 		console.log('Successful Login')
-		this.setLogin(response)
+		console.log(response)
+		this.setLogin(response.login)
 
 
 	}else{
@@ -365,18 +451,20 @@ Login.prototype.fail = function(data){
 Login.prototype.redirect = function(){
 	  
 	  
-	  window.location.href = "dashboard.html"
+	
+	  window.location.href = this.ref+".html"
 
 }
 
 Login.prototype.setLogin = function(data){
 	  
 	var sb = this.sb
-	  var login = {
-	  	
-	     	username: data.username
-	  	
+	var login = {
+	     	username: data.id
 	  }
+
+	  console.log('SET LOGIN, LOGIN')
+	  console.log(login)
 	  
 	  localStorage.setItem('login',sb.sb_jsToJson(login))
 	  this.redirect()
@@ -438,16 +526,21 @@ Logout.prototype.handleLogOut = function(ev){
 Logout.prototype.redirect = function(){
 	  
 	  
-	  window.location.href = "app.html"
+	  window.location.href = "bargain.html"
 
 }
 
 Logout.prototype.unsetLogout = function(){
 	  
+	  console.log('The user is about to be logged out')
+	
+
 	  if(localStorage.login){
 	  	
-	  	 localStorage.removeItem('login')
-	  	 this.redirect()
+		   localStorage.removeItem('login')
+		   console.log('Get the loging')
+		   console.log(localStorage.getItem('login'))
+	  	   this.redirect()
 	  	
 	  }
 	  
@@ -2131,6 +2224,1349 @@ Component.prototype.tools = function(id){
 			
 		
 
+		},
+		cart: {
+
+			events: {
+
+				addToCart: function(ev){
+
+					var sb = that.sb
+	
+					sb.sb_stopEventBubble(ev)
+					var productData = this.functions.getAddProduct(ev)
+					that.emit({type:'add-to-cart',data: productData})
+				},
+				updateCart: function(ev){
+	
+					var sb = that.sb
+	
+					// console.log('The input event')
+					// console.log(ev)
+					//ev.stopImmediatePropagation()
+					var productData = this.functions.getUpdateProduct(ev)
+					if(productData){
+	
+						that.emit({type:'update-cart',data: productData})
+	
+					}
+	
+					return false;
+	
+	
+				},
+				removeFromCart: function(ev){
+	
+					var sb = that.sb
+	
+					sb.sb_stopEventBubble(ev)
+	
+					var productData = this.functions.getRemoveProduct(ev)
+					if(productData){
+	
+						that.emit({type:'remove-from-cart',data: productData})
+	
+					}
+								
+				},
+				startOrder: function(tool,ev){
+
+					var sb = this.sb
+					sb.sb_preventNormal(ev)
+
+					var cartstate = tool.functions.getCart()
+
+					if(!cartstate.empty){
+
+						var totalCart = tool.functions.calculate(cartstate.cart)
+
+						if(localStorage.ordercollects){
+
+							localStorage.removeItem('ordercollects')
+							localStorage.setItem('ordercollects',sb.sb_jsToJson({
+
+								cart: {
+	
+									data: {
+										cart: cartstate.cart,
+										extra : totalCart
+									}
+								}
+	
+							}))
+
+						}else{
+
+							localStorage.setItem('ordercollects',sb.sb_jsToJson({
+
+								cart: {
+	
+									data: {
+										cart: cartstate.cart,
+										extra : totalCart
+									}
+								}
+	
+							}))
+
+						}
+						
+
+						window.location.href= 'checkout.html'
+					}
+
+					
+
+				}
+
+			},
+			functions:{
+
+
+
+				getCart : function(evt){
+
+					var sb = that.sb
+
+					if(localStorage['cart']){
+				
+						var cart = sb.sb_jsonToJs(localStorage['cart'])
+						
+						if(cart.length > 0){
+							
+							 return {empty: false,cart: cart}
+							
+						}else{
+							
+							return {empty: true}
+							
+						}
+						
+						
+					}else{
+						
+						return {empty: true}
+
+					}
+
+				},
+				calculate: function(calcs){
+
+
+					var totalPrice = 0;
+
+					for(var p = 0; p < calcs.length; p++){
+
+						var price = calcs[p].productPrice * calcs[p].productQty
+						totalPrice += price
+					
+					}
+
+					return totalPrice
+
+
+
+
+				}
+					
+				
+					
+			}
+			
+		
+
+		},
+		checkout: {
+
+			events: {
+
+				loadNext: function(tool,els,ev){
+
+					var sb = that.sb
+
+					console.log(tool.identifiers.current)
+					console.log(tool.identifiers.steps)
+					console.log(tool.identifiers.steps[tool.identifiers.current].next)
+
+					var next = tool.identifiers.steps[tool.identifiers.current].next
+
+					if(tool.identifiers.steps[tool.identifiers.current].completed){
+
+						console.log('THE CURRENT STEP HAS COMPLETED')
+						if(tool.identifiers.steps[tool.identifiers.current].next === 'confirm'){
+
+							sb.sb_insertInner(ev.target,'Place Order')
+						}
+						if(!tool.identifiers.steps[next].called){
+
+							console.log('This step has not been called, call it')
+							console.log(tool.identifiers.steps[next])
+							tool.functions[tool.identifiers.steps[tool.identifiers.current].next](tool,els)
+
+						}
+						
+
+					}else{
+
+						console.log('Please complete the step before this to proceed')
+					}
+					
+	
+					// sb.sb_stopEventBubble(ev)
+					// var productData = this.functions.getAddProduct(ev)
+					// that.emit({type:'add-to-cart',data: productData})
+				},
+				save: function(tool,els,stage,ev){
+
+					var sb = that.sb
+					var value = ev.target.value
+
+					console.log('The saved value')
+					console.log(value)
+
+				
+					if(localStorage.ordercollects){
+
+
+						var ordercollects = sb.sb_jsonToJs(localStorage.getItem('ordercollects'))
+
+						if(ordercollects[stage] === undefined){
+
+							ordercollects[stage] = {
+								data: value
+							}
+	
+							tool.identifiers.current = stage
+							tool.identifiers.steps[tool.identifiers.current].completed = true
+	
+							console.log('ordercollects save undefined stage')
+							console.log(ordercollects)
+							localStorage.setItem('ordercollects',sb.sb_jsToJson(ordercollects))
+							
+	
+						}else{
+	
+							ordercollects[stage].data = value
+							tool.identifiers.current = stage
+							tool.identifiers.steps[tool.identifiers.current].completed = true
+						}
+
+					}else{
+
+						var ordercollects = {
+
+							stage:{
+								data: value
+							}
+						}
+
+						localStorage.setItem('ordercollects',sb.sb_jsToJson(ordercollects))
+						tool.identifiers.current = stage
+						tool.identifiers.steps[tool.identifiers.current].completed = true
+
+					}
+
+				
+
+				
+
+
+				},
+				reveal: function(tool,els,reveal,append,ev){
+
+					var sb = that.sb
+					
+					if(append.contains(reveal)){
+
+						console.log('Main contains reveal')
+						var computedStyle = document.defaultView.getComputedStyle(reveal,null);
+						console.log(computedStyle.display)
+
+
+						if(computedStyle.display === 'block'){
+
+							reveal.style.display = 'none'
+						}else{
+
+							reveal.style.display = 'block'
+						}
+
+					}else{
+
+						console.log('Main does not reveal')
+						sb.sb_addChild(append,reveal)
+
+					}
+					
+
+				},
+				captureAddress: function(tool,els,stage,ev){
+
+
+					var sb = that.sb
+
+					sb.sb_stopEventBubble(ev)
+					sb.sb_preventNormal(ev)
+					var addressForm = sb.sb_getById('capture-address')
+					
+					var inputs = sb.sb_getByTag(addressForm,'input')
+					var address = {}
+					
+
+					for(var i=0; i < inputs.length; i++){
+
+						if(inputs[i].value === '' || inputs[i].value.length < 2){
+							break;
+
+						}else if(i === inputs.length - 1){
+
+							
+							address[inputs[i].name] = inputs[i].value
+
+							if(localStorage.ordercollects){
+
+								var ordercollects = sb.sb_jsonToJs(localStorage.getItem('ordercollects'))
+
+								if(ordercollects[stage] === undefined){
+
+									ordercollects[stage] = {
+										data: address
+									}
+
+									tool.identifiers.current = stage
+									tool.identifiers.steps[tool.identifiers.current].completed = true
+
+									console.log('ordercollects save undefined stage')
+									console.log(ordercollects)
+									localStorage.setItem('ordercollects',sb.sb_jsToJson(ordercollects))
+									
+
+								}else{
+
+									ordercollects[stage].data = address
+									tool.identifiers.current = stage
+									tool.identifiers.steps[tool.identifiers.current].completed = true
+								}
+							}else{
+
+								
+								var ordercollects = {
+
+									stage:{
+										data: address
+									}
+								}
+								console.log('THE ORDERCOLLECTS IS UNDEFINED')
+		
+								localStorage.setItem('ordercollects',sb.sb_jsToJson(ordercollects))
+								tool.identifiers.current = stage
+								tool.identifiers.steps[tool.identifiers.current].completed = true
+
+							}
+
+						}else{
+
+							address[inputs[i].name] = inputs[i].value
+						}
+					}
+
+					
+
+				},
+				capturePayment: function(tool,els,stage,ev){
+
+
+					var sb = that.sb
+
+					sb.sb_stopEventBubble(ev)
+					sb.sb_preventNormal(ev)
+					var paymentForm = sb.sb_getById('capture-card')
+					
+					var inputs = sb.sb_getByTag(paymentForm,'input')
+					var card = {}
+					
+
+					for(var i=0; i < inputs.length; i++){
+
+						if(inputs[i].value === '' || inputs[i].value.length < 2){
+							break;
+
+						}else if(i === inputs.length - 1){
+
+							
+							card[inputs[i].name] = inputs[i].value
+
+							
+
+							if(localStorage.ordercollects){
+
+								var ordercollects = sb.sb_jsonToJs(localStorage.getItem('ordercollects'))
+
+								if(ordercollects[stage] === undefined){
+
+									ordercollects[stage] = {
+										data: card
+									}
+	
+									tool.identifiers.current = stage
+									tool.identifiers.steps[tool.identifiers.current].completed = true
+	
+									console.log('ordercollects save undefined stage')
+									console.log(ordercollects)
+									localStorage.setItem('ordercollects',sb.sb_jsToJson(ordercollects))
+									
+	
+								}else{
+	
+									ordercollects[stage].data = card
+									tool.identifiers.current = stage
+									tool.identifiers.steps[tool.identifiers.current].completed = true
+								}
+
+							}else{
+
+									
+								var ordercollects = {
+
+									stage:{
+										data: card
+									}
+								}
+								console.log('THE ORDERCOLLECTS IS UNDEFINED')
+		
+								localStorage.setItem('ordercollects',sb.sb_jsToJson(ordercollects))
+								tool.identifiers.current = stage
+								tool.identifiers.steps[tool.identifiers.current].completed = true
+
+							}
+
+							
+
+						}else{
+
+							card[inputs[i].name] = inputs[i].value
+						}
+					}
+
+
+
+				},
+				orderPlaced: function(data){
+
+					var sb = that.sb
+
+					
+					var received = sb.sb_createElement('article')
+					var plasuc = sb.sb_createElement('div')
+					var placed = sb.sb_createElement('div')
+					var remark = sb.sb_createElement('div')
+					var track = sb.sb_createElement('div')
+					var manage = sb.sb_createElement('div')
+					var success = sb.sb_createElement('span')
+					var successBtn = sb.sb_createElement('button')
+					var completed = sb.sb_createElement('span')
+					var placedText = sb.sb_createElement('p')
+					var remarkText = sb.sb_createElement('p')
+					var trackText = sb.sb_createElement('a')
+					var manageText = sb.sb_createElement('span')
+
+				
+					sb.sb_addProperty(success,'class','d-inline-block font-fd-xxx-tn fg-dark-lt')
+					sb.sb_addProperty(plasuc,'class','d-block font-fd-xxx-tn mg-bottom-fd-xxx-sm mg-left-fl-xx-sm')
+					sb.sb_addProperty(placed,'class','d-block mg-bottom-fd-xxx-sm mg-left-fl-xx-tn')
+					sb.sb_addProperty(remark,'class','d-block mg-bottom-fd-md mg-left-fl-xx-tn')
+					sb.sb_addProperty(track,'class','d-block mg-bottom-fd-tn mg-left-fl-x-tn')
+					sb.sb_addProperty(manage,'class','link d-block pos-fd hr-size-fl-xx-bg bottom-offset-0 bg-light pd-top-fd-xxx-sm pd-bottom-fd-xx-bt z-index')
+
+					sb.sb_addProperty(placedText,'class','d-block font-fd-xxx-sm fg-dk-green')
+					sb.sb_addProperty(remarkText,'class','d-block font-fd-x-tn fg-dark hr-size-fl-bg text-align-center')
+					sb.sb_addProperty(trackText,'class','d-block font-fd-x-tn pd-top-fd-xx-tn text-align-center link pd-bottom-fd-xx-tn bd-fd-dark-green-x-bt bd-rad-bt hr-size-fl-xx-lg fg-secondary')
+					sb.sb_addProperty(trackText,'href','orderstatus.html')
+					sb.sb_addProperty(manageText,'class','d-block font-fd-x-tn pd-top-fd-xx-tn text-align-center pd-bottom-fd-xx-tn bg-secondary hr-size-fl-xx-bg fg-light')
+					
+				
+
+
+					sb.sb_addProperty(successBtn,'class','mg-bottom-fd-x-tn vt-size-fd-xxx-tn  mg-right-fd-xx-sm bd-rad-fl-md bd-none hr-size-fd-xx-bg bg-dk-green fg-light pos-rel')
+					sb.sb_addProperty(received,'class','hr-size-fl-xx-bg mg-bottom-fd-hg pos-rel top-offset-vh-x-tn')
+
+				
+					sb.sb_addProperty(completed,'class','font-fd-xxx-sm form__checkbox_button')
+
+					sb.sb_insertInner(completed,'&#10003;')
+					sb.sb_insertInner(placedText,'Order successfully placed')
+					sb.sb_insertInner(remarkText,'Good news pal, your order #'+data.order.order_no+' has been placed is being proccessed')
+					sb.sb_insertInner(trackText,'Track Order')
+					sb.sb_insertInner(manageText,'View Order')
+					sb.sb_insertInner(sb.view,'')
+
+					sb.sb_addChild(successBtn,completed)
+					sb.sb_addChild(success,successBtn)
+					sb.sb_addChild(plasuc,success)
+					sb.sb_addChild(placed,placedText)
+					sb.sb_addChild(remark,remarkText)
+					sb.sb_addChild(track,trackText)
+					sb.sb_addChild(manage,manageText)
+					sb.sb_addChild(received,plasuc)
+					sb.sb_addChild(received,placed)
+					sb.sb_addChild(received,remark)
+					sb.sb_addChild(received,track)
+					sb.sb_addChild(received,manage)
+					sb.sb_addChild(sb.view,received)
+
+					localStorage.setItem('orderno',sb.sb_jsToJson({orderno: data.order.order_no}))
+
+
+
+
+				}
+				
+				
+
+			},
+			functions:{
+
+
+
+				cart : function(evt){
+
+					var sb = that.sb
+					window.location.href = 'kart.html'
+				
+				},
+				delivery : function(tool,els){
+				
+						var sb = that.sb
+						console.log('The delivery function runs')
+
+						var methods = [
+
+							{label:'Instore Serve',value: 'instore',run: tool.events.save},
+							{label:'Takeaway',value:'takeaway',run: tool.events.save},
+							{label:'Home delivery',value:'home',run: tool.events.reveal}
+						]
+						var revealContent = {
+
+							address: {
+								control: {
+									name: 'input',
+									type: 'text',
+									placeholder:'Street address',
+									text: '',
+									id:'address',
+									style: {
+										parents: {
+
+											list: 'list__item list__item--ve list__item--marg-offset-bottom-small pd-left-fd-tn pd-top-fd-bt',
+											span: ' hr-size-fl-xx-bg text-align-center bg-dark-lta fg-dark bd-rad-x-bt pd-fd-xxx-tn d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block  mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'bg-transparent hr-size-fl-xx-bg pd-fd-bt bd-none'
+									}
+								}
+							},
+							city:  {
+								control: {
+									name: 'input',
+									type: 'text',
+									placeholder:'Your city',
+									text:'',
+									id:'city',
+									style: {
+										parents: {
+
+											list: 'list__item list__item--ve  list__item--marg-offset-bottom-small pd-left-fd-tn pd-top-fd-bt',
+											span: ' pd-fd-xxx-tn hr-size-fl-xx-bg text-align-center bg-dark-lta fg-dark bd-rad-x-bt d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block  mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'bg-transparent hr-size-fl-xx-bg pd-fd-bt bd-none'
+									}
+								}
+							},
+							province:  {
+								control: {
+									name:'input',
+									type: 'text',
+									placeholder:'Province',
+									text: '',
+									id: 'province',
+									style: {
+										parents: {
+
+											list: 'list__item  d-inline-block hr-size-fl-sm list__item--ve  list__item--marg-offset-bottom-small pd-top-fd-bt',
+											span: ' pd-fd-xxx-tn hr-size-fl-lg text-align-center bg-dark-lta fg-dark bd-rad-x-bt d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block  mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'bg-transparent hr-size-fl-xx-bg pd-fd-bt bd-none'
+									}
+								}
+							},
+							code:  {
+								control: {
+									name: 'input',
+									type: 'text',
+									placeholder:'Postal code',
+									text: '',
+									id:'code',
+									style: {
+										parents: {
+
+											list: 'list__item  d-inline-block hr-size-fl-sm list__item--ve  list__item--marg-offset-bottom-small',
+											span: ' pd-fd-xxx-tn hr-size-fl-lg text-align-center bg-dark-lta fg-dark bd-rad-x-bt pd-fd-bt d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'bg-transparent hr-size-fl-xx-bg pd-fd-bt bd-none'
+									}
+								}
+							},
+							save:  {
+
+								control: {
+									name: 'input',
+									type: 'submit',
+									placeholder:'Postal code',
+									text: 'Save',
+									id:'capture_address',
+									style: {
+										parents: {
+
+											list: 'list__item  d-inline-block hr-size-fl-sm list__item--ve  list__item--marg-offset-bottom-small',
+											span: ' pd-fd-xxx-tn hr-size-fl-lg text-align-center fg-dark bd-rad-x-bt pd-fd-bt d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'hr-size-fl-xx-bg bg-dark fg-light d-inline-block pd-fd-bt bd-none'
+									},
+									event: tool.events.captureAddress
+								}
+							}
+
+						}
+						var homeReveal = sb.sb_createElement('form')
+						var lst = sb.sb_createElement('ul')
+
+
+
+
+
+						var stageContent = sb.sb_createElement('section')
+						var legend = sb.sb_createElement('h1')
+
+						var optionsForm = sb.sb_createElement('form')
+						var optionList = sb.sb_createElement('ul')
+						sb.sb_addProperty(optionsForm,'class','form')
+						sb.sb_addProperty(optionList,'class','list list--hr list--none')
+
+						sb.sb_addProperty(homeReveal,'class','form mg-top-fd-md mg-bottom-fd-md pd-left-fl-x-bt')
+						sb.sb_addProperty(homeReveal,'id','capture-address')
+						sb.sb_addProperty(lst,'class','list list--hr list--none')
+		   
+		   
+						sb.sb_addChild(optionsForm,optionList)
+						sb.sb_addChild(homeReveal,lst)
+
+						for(item in revealContent){
+
+							var li = sb.sb_createElement('li')
+							var lb = sb.sb_createElement('small')
+							var sp = sb.sb_createElement('span')
+							var input = sb.sb_createElement(revealContent[item].control.name)
+							sb.sb_addProperty(li,'class',revealContent[item].control.style.parents.list)
+							sb.sb_addProperty(lb,'class',revealContent[item].control.style.parents.small)
+							sb.sb_addProperty(sp,'class',revealContent[item].control.style.parents.span)
+							sb.sb_addProperty(input,'class',revealContent[item].control.style.me)
+							sb.sb_addProperty(input,'type',revealContent[item].control.type)
+							sb.sb_addProperty(input,'placeholder',revealContent[item].control.placeholder)
+							sb.sb_addProperty(input,'value',revealContent[item].control.text)
+							sb.sb_addProperty(input,'name',revealContent[item].control.id)
+
+							if(revealContent[item].control.event !== undefined){
+
+								sb.sb_addEvent(input,'click',revealContent[item].control.event.bind(this,tool,els,'delivery'))
+							}
+							// sb.sb_addProperty(input,'name',revealContent[item].control.id)
+				
+							if(item !== 'save'){
+
+								sb.sb_insertInner(lb,item)
+
+							}
+							
+							// sb.sb_insertInner(sp,userData[id])
+							sb.sb_addChild(sp,input)
+							sb.sb_addChild(li,lb)
+							sb.sb_addChild(li,sp)
+							sb.sb_addChild(lst,li)
+				
+						}
+				
+				
+
+						for(var i=0;i < methods.length; i++){
+
+
+						
+							  console.log('function name')
+							  console.log(methods[i].run.name)
+			   
+							   var uli = sb.sb_createElement('li')
+							   var usp = sb.sb_createElement('span')   
+							   var updator = sb.sb_createElement('input')
+							   var updatorLabel = sb.sb_createElement('label')
+							   var updatorLabelSp = sb.sb_createElement('span')
+							   var uinputId = sb.sb_createElement('input')
+							   var uinputPrice = sb.sb_createElement('input')
+							   var uinputName = sb.sb_createElement('input')
+							   var radioCont = sb.sb_createElement('div')
+							   var idCont = sb.sb_createElement('div')
+							   var priceCont = sb.sb_createElement('div')
+			   
+							   sb.sb_addProperty(uli,'class','list__item form__radio__group list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small d-block hr-size-fl-bg cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+							   sb.sb_addProperty(usp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+							   
+							   sb.sb_addProperty(updator,'type','radio')
+							   sb.sb_addProperty(updator,'name','updator')
+							   sb.sb_addProperty(updator,'id','updator')
+							   sb.sb_addProperty(updator,'value',methods[i].value)
+							   sb.sb_addProperty(updator,'class','form__radio__group')
+			   
+							   sb.sb_addProperty(updatorLabel,'type','label')
+							   sb.sb_addProperty(updatorLabel,'for','updator')
+							   sb.sb_addProperty(updatorLabel,'class','form__radio__label')
+							   sb.sb_addProperty(updatorLabelSp,'class','form__radio__button')
+			   
+			   
+							//    sb.sb_addProperty(uinputId,'type','hidden')
+							//    sb.sb_addProperty(uinputId,'name','product_id')
+							//    sb.sb_addProperty(uinputId,'value','sampleid')
+					   
+							//    sb.sb_addProperty(uinputPrice,'type','hidden')
+							//    sb.sb_addProperty(uinputPrice,'name','product_price')
+							//    sb.sb_addProperty(uinputPrice,'value','sampleprice')
+					   
+							   
+							//    sb.sb_addProperty(uinputName,'type','hidden')
+							//    sb.sb_addProperty(uinputName,'name','product_name')
+							//    sb.sb_addProperty(uinputName,'value','sampleproducts')
+			   
+							   sb.sb_addProperty(radioCont,'class','d-inline-block pd-left-fl-x-bt hr-size-fl-xxx-sm')
+							   sb.sb_addProperty(idCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
+							   sb.sb_addProperty(priceCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
+			   
+						   
+							   sb.sb_insertInner(idCont,methods[i].label)
+							//    sb.sb_insertInner(priceCont,'R854')
+
+							   if(methods[i].run.name === 'save'){
+
+								 sb.sb_addEvent(updator,'click',methods[i].run.bind(this,tool,els,'delivery'))
+
+							   }else{
+
+								 sb.sb_addEvent(updator,'click',methods[i].run.bind(this,tool,els,homeReveal,uli,'delivery'))	
+
+							   }
+							  
+			   
+							   sb.sb_addChild(optionList,uli)
+							   sb.sb_addChild(uli,radioCont)
+							   sb.sb_addChild(uli,idCont)
+							//    sb.sb_addChild(uli,priceCont)
+							   sb.sb_addChild(updatorLabel,updatorLabelSp)
+							   sb.sb_addChild(updator,updatorLabel)
+							   sb.sb_addChild(radioCont,updator)
+
+							  
+						   
+			   
+							
+						}
+
+						sb.sb_addProperty(stageContent,'class','hr-size-fl-xx-lg mg-auto')
+						sb.sb_addProperty(legend,'class','bg-secondary bd-left-fd-dark-bt pd-left-fd-xxx-tn hr-size-fl-lg fg-light font-wt-bolder mg-bottom-fd-md font-fd-tn ')
+						
+
+						sb.sb_insertInner(legend,'Delivery Method')
+
+						
+						sb.sb_addChild(stageContent,legend)
+						sb.sb_addChild(stageContent,optionsForm)
+						sb.sb_addChild(els.main,stageContent)
+
+						tool.identifiers.steps['delivery'].called = true
+
+					
+						// tool.identifiers.current = 'delivery'
+					
+
+
+				
+						
+				
+				
+				},
+				payment : function(tool,els){
+				
+				
+					   var sb = that.sb
+						console.log('The payment function runs')
+
+						var methods = [
+
+							{label:'Cashpay',value:'cashpay',run: tool.events.save},
+							{label:'Paypal',value:'paypal',run: tool.events.save},
+							{label:'Visa',value:'visa',run: tool.events.reveal}
+						]
+
+						var revealContent = {
+
+							['card holder']: {
+								control: {
+									name: 'input',
+									type: 'text',
+									placeholder:"Card holder's name",
+									text: '',
+									id:'owner',
+									style: {
+										parents: {
+
+											list: 'list__item list__item--ve list__item--marg-offset-bottom-small pd-left-fd-tn pd-top-fd-bt',
+											span: ' hr-size-fl-xx-bg text-align-center bg-dark-lta fg-dark bd-rad-x-bt pd-fd-xxx-tn d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block  mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'bg-transparent hr-size-fl-xx-bg pd-fd-bt bd-none'
+									}
+								}
+							},
+							['card number']:  {
+								control: {
+									name: 'input',
+									type: 'text',
+									placeholder:'0000 0000 000 000 000',
+									text:'',
+									id:'card_number',
+									style: {
+										parents: {
+
+											list: 'list__item list__item--ve  list__item--marg-offset-bottom-small pd-left-fd-tn pd-top-fd-bt',
+											span: ' pd-fd-xxx-tn hr-size-fl-lg text-align-center bg-dark-lta fg-dark bd-rad-x-bt d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block  mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'bg-transparent hr-size-fl-xx-bg pd-fd-bt bd-none'
+									}
+								}
+							},
+							expiry:  {
+								control: {
+									name:'input',
+									type: 'text',
+									placeholder:'05/2020',
+									text: '',
+									id:'expiry',
+									style: {
+										parents: {
+
+											list: 'list__item  d-inline-block hr-size-fl-sm list__item--ve  list__item--marg-offset-bottom-small pd-top-fd-bt',
+											span: ' pd-fd-xxx-tn hr-size-fl-lg text-align-center bg-dark-lta fg-dark bd-rad-x-bt d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block  mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'bg-transparent hr-size-fl-xx-bg pd-fd-bt bd-none'
+									}
+								}
+							},
+							cvv:  {
+								control: {
+									name: 'input',
+									type: 'text',
+									placeholder:'000',
+									text: '',
+									id:'cvv',
+									style: {
+										parents: {
+
+											list: 'list__item  d-inline-block hr-size-fl-sm list__item--ve  list__item--marg-offset-bottom-small',
+											span: ' pd-fd-xxx-tn hr-size-fl-lg text-align-center bg-dark-lta fg-dark bd-rad-x-bt pd-fd-bt d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'bg-transparent hr-size-fl-xx-bg pd-fd-bt bd-none'
+									}
+								}
+							},
+							save:  {
+
+								control: {
+									name: 'input',
+									type: 'submit',
+									placeholder:'Postal code',
+									text: 'Save',
+									id: 'save',
+									style: {
+										parents: {
+
+											list: 'list__item  d-inline-block hr-size-fl-sm list__item--ve  list__item--marg-offset-bottom-small',
+											span: ' pd-fd-xxx-tn hr-size-fl-lg text-align-center fg-dark bd-rad-x-bt pd-fd-bt d-block mg-top-fd-bt font-fd-x-tn',
+											small: 'd-block mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary',
+										},
+										me:'hr-size-fl-xx-bg bg-dark fg-light d-inline-block pd-fd-bt bd-none'
+									},
+									event: tool.events.capturePayment
+								}
+							}
+
+						}
+						var reveal = sb.sb_createElement('form')
+						var lst = sb.sb_createElement('ul')
+					
+
+						var stageContent = sb.sb_createElement('section')
+						var legend = sb.sb_createElement('h1')
+
+						var optionsForm = sb.sb_createElement('form')
+						var optionList = sb.sb_createElement('ul')
+						sb.sb_addProperty(optionsForm,'class','form')
+						sb.sb_addProperty(optionList,'class','list list--hr list--none')
+
+						sb.sb_addProperty(reveal,'class','form mg-top-fd-md mg-bottom-fd-md pd-left-fl-x-bt')
+						sb.sb_addProperty(lst,'class','list list--hr list--none')
+		   
+		   
+						sb.sb_addChild(optionsForm,optionList)
+						sb.sb_addChild(reveal,lst)
+
+						for(item in revealContent){
+
+							var li = sb.sb_createElement('li')
+							var lb = sb.sb_createElement('small')
+							var sp = sb.sb_createElement('span')
+							var input = sb.sb_createElement(revealContent[item].control.name)
+							sb.sb_addProperty(li,'class',revealContent[item].control.style.parents.list)
+							sb.sb_addProperty(lb,'class',revealContent[item].control.style.parents.small)
+							sb.sb_addProperty(sp,'class',revealContent[item].control.style.parents.span)
+							sb.sb_addProperty(input,'class',revealContent[item].control.style.me)
+							sb.sb_addProperty(input,'type',revealContent[item].control.type)
+							sb.sb_addProperty(input,'placeholder',revealContent[item].control.placeholder)
+							sb.sb_addProperty(input,'value',revealContent[item].control.text)
+							sb.sb_addProperty(input,'name',revealContent[item].control.id)
+							// sb.sb_addProperty(input,'name',revealContent[item].control.id)
+				
+							if(item !== 'save'){
+
+								sb.sb_insertInner(lb,item)
+
+							}
+
+							if(revealContent[item].control.event !== undefined){
+
+								sb.sb_addEvent(input,'click',revealContent[item].control.event.bind(this,tool,els,'payment'))
+							}
+							
+							// sb.sb_insertInner(sp,userData[id])
+							sb.sb_addChild(sp,input)
+							sb.sb_addChild(li,lb)
+							sb.sb_addChild(li,sp)
+							sb.sb_addChild(lst,li)
+				
+						}
+
+						for(var i=0;i < methods.length; i++){
+
+
+						
+			   
+						
+			   
+							   var uli = sb.sb_createElement('li')
+							   var usp = sb.sb_createElement('span')   
+							   var updator = sb.sb_createElement('input')
+							   var updatorLabel = sb.sb_createElement('label')
+							   var updatorLabelSp = sb.sb_createElement('span')
+							   var uinputId = sb.sb_createElement('input')
+							   var uinputPrice = sb.sb_createElement('input')
+							   var uinputName = sb.sb_createElement('input')
+							   var radioCont = sb.sb_createElement('div')
+							   var idCont = sb.sb_createElement('div')
+							   var priceCont = sb.sb_createElement('div')
+			   
+							   sb.sb_addProperty(uli,'class','list__item form__radio__group list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small d-block hr-size-fl-bg cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+							   sb.sb_addProperty(usp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+							   
+							   sb.sb_addProperty(updator,'type','radio')
+							   sb.sb_addProperty(updator,'name','updator')
+							   sb.sb_addProperty(updator,'id','updator')
+							   sb.sb_addProperty(updator,'value',methods[i].value)
+							   sb.sb_addProperty(updator,'class','form__radio__group')
+			   
+							   sb.sb_addProperty(updatorLabel,'type','label')
+							   sb.sb_addProperty(updatorLabel,'for','updator')
+							   sb.sb_addProperty(updatorLabel,'class','form__radio__label')
+							   sb.sb_addProperty(updatorLabelSp,'class','form__radio__button')
+			   
+			   
+							//    sb.sb_addProperty(uinputId,'type','hidden')
+							//    sb.sb_addProperty(uinputId,'name','product_id')
+							//    sb.sb_addProperty(uinputId,'value','sampleid')
+					   
+							//    sb.sb_addProperty(uinputPrice,'type','hidden')
+							//    sb.sb_addProperty(uinputPrice,'name','product_price')
+							//    sb.sb_addProperty(uinputPrice,'value','sampleprice')
+					   
+							   
+							//    sb.sb_addProperty(uinputName,'type','hidden')
+							//    sb.sb_addProperty(uinputName,'name','product_name')
+							//    sb.sb_addProperty(uinputName,'value','sampleproducts')
+			   
+							   sb.sb_addProperty(radioCont,'class','d-inline-block pd-left-fl-x-bt hr-size-fl-xxx-sm')
+							   sb.sb_addProperty(idCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
+							   sb.sb_addProperty(priceCont,'class','d-inline-block font-fd-xx-tn hr-size-fl-xxx-sm')
+			   
+						   
+							   sb.sb_insertInner(idCont,methods[i].label)
+							//    sb.sb_insertInner(priceCont,'R854')
+
+								if(methods[i].run.name === 'save'){
+
+									sb.sb_addEvent(updator,'click',methods[i].run.bind(this,tool,els,'payment'))
+
+								}else{
+
+									sb.sb_addEvent(updator,'click',methods[i].run.bind(this,tool,els,reveal,uli,'payment'))	
+
+								}
+			   
+							   sb.sb_addChild(optionList,uli)
+							   sb.sb_addChild(uli,radioCont)
+							   sb.sb_addChild(uli,idCont)
+							//    sb.sb_addChild(uli,priceCont)
+							   sb.sb_addChild(updatorLabel,updatorLabelSp)
+							   sb.sb_addChild(updator,updatorLabel)
+							   sb.sb_addChild(radioCont,updator)
+
+							  
+						   
+			   
+							
+						}
+
+						sb.sb_addProperty(stageContent,'class','hr-size-fl-xx-lg mg-auto')
+						sb.sb_addProperty(legend,'class','bg-secondary bd-left-fd-dark-bt pd-left-fd-xxx-tn hr-size-fl-lg fg-light font-wt-bolder mg-bottom-fd-md font-fd-tn ')
+						
+
+						sb.sb_insertInner(legend,'Paying With')
+						sb.sb_insertInner(els.main,'')
+						
+						sb.sb_addChild(stageContent,legend)
+						sb.sb_addChild(stageContent,optionsForm)
+						
+						sb.sb_addChild(els.main,stageContent)
+
+						sb.sb_insertInner(els.buttons[tool.identifiers.steps['payment'].previous],' ')
+						sb.sb_addChild(els.buttons[tool.identifiers.steps['payment'].previous],sb.sb_copyDeep(els.completed))
+						sb.sb_addChild(els.buttons['payment'],els.active)
+
+						tool.identifiers.steps['payment'].called = true
+
+
+						// tool.identifiers.current = 'delivery'
+					
+
+
+				
+				
+				
+				},
+				confirm: function(tool,els){
+
+					console.log('The confirm runs')
+					var sb = that.sb
+					var order = {}
+
+					var stageContent = sb.sb_createElement('section')
+					var legend = sb.sb_createElement('h1')
+					var address = sb.sb_createElement('h1')
+					var paymethod = sb.sb_createElement('h1')
+					var deliverydetails = ''
+					var paymentdetails = ''
+
+
+					var ordercollects = sb.sb_jsonToJs(localStorage.ordercollects)
+					var cart = ordercollects.cart.data.cart
+					var total = ordercollects.cart.data.extras
+					var deliverymethod = ordercollects.delivery.data
+					var paymentmethod = ordercollects.payment.data
+
+					console.log('THE PAY METHOD')
+					console.log(deliverymethod)
+					console.log(paymentmethod)
+					console.log(ordercollects)
+
+					if(deliverymethod instanceof Object){
+
+						deliverydetails = deliverymethod.address +',' + deliverymethod.city+',' + deliverymethod.code						
+						
+					}else{
+
+						deliverydetails = deliverymethod
+					}
+
+					if(paymentmethod instanceof Object){
+
+						paymentdetails = paymentmethod.owner +',' + paymentmethod.card_number+',' + paymentmethod.cvv						
+						
+					}else{
+
+						paymentdetails = paymentmethod
+					}
+
+					var date = new Date()
+					var year = date.getFullYear()
+					var month = date.getMonth()
+					var yearDate = date.getDate()
+					var hour = date.getHours()
+					var minutes = date.getMinutes()
+
+					ordercollects.date = (year+'/'+month+'/'+yearDate+'/'+hour+'/'+minutes)
+
+					order.date = ordercollects.date
+					order.address = deliverydetails
+					order.payment = paymentdetails
+					order.cart = cart
+					order.total = total
+					order.username = sb.sb_jsonToJs(localStorage.login).username
+
+					if(localStorage.order){
+
+						localStorage.removeItem('order')
+						localStorage.setItem('order',sb.sb_jsToJson(order))
+					}else{
+
+						localStorage.setItem('order',sb.sb_jsToJson(order))
+
+					}
+					
+
+					console.log('The ordercollects data')
+					console.log(order)
+
+
+
+					var lst = sb.sb_createElement('ul')
+					sb.sb_addProperty(lst,'class','list list-none')
+					var addressD = sb.sb_createElement('section')
+					var paymentD = sb.sb_createElement('section')
+					// sb.sb_addChild(els.main,lst)
+
+					for(var p = 0; p < cart.length; p++){
+
+						let li = sb.sb_createElement('li')
+						sb.sb_addProperty(li,'class','hr-size-fl-xx-bg cursor-pointer fd-font-x-tn mg-bottom-fd-xxx-tn pd-left-fl-bt bg-light pos-rel d-block bd-bottom-fd-secondary-xx-bt pd-bottom-fd-tn pd-top-fd-tn')
+						// sb.sb_addProperty(li,'data-navigata-page','detail')
+						// sb.sb_addProperty(li,'data-navigata-data','[{data: '+itemData.item_id+',page: detail,endpoint: /detail}]')
+
+
+
+
+						let sp = sb.sb_createElement('span')
+						let sp2 = sb.sb_createElement('span')
+						let sp3 = sb.sb_createElement('span')
+						let img = sb.sb_createElement('img')
+						let input = sb.sb_createElement('span')
+						let rm = sb.sb_createElement('span')
+						let st = sb.sb_createElement('strong')
+						let small = sb.sb_createElement('small')
+						let smallSp = sb.sb_createElement('span')
+						let priceSp = sb.sb_createElement('span')
+						
+			
+			
+			
+						sb.sb_addProperty(img,'src','img/fish.jpg')
+						sb.sb_addProperty(img,'class','hr-size-fl-xx-md mg-left-fl-xx-sm bd-rad-bt pos-rel')
+						// sb.sb_addProperty(fm,'class','hr-fl-size-xx-bg mg-top-fl-x-tn mg-bottom-fd-sm pos-rel')
+						// sb.sb_addProperty(fm,'id',ct+'-form')
+						// sb.sb_addProperty(minus,'class','hr-size-fl-xxx-sm cursor-pointer float-left vt-size-fd-bt d-inline-block bg-light bd-bottom-left-rad-fd-xx-bt bd-top-left-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center  font-fd-xx-tn font-wt-bolder  pos-rel')
+						// sb.sb_addProperty(minus,'id',ct)
+						// sb.sb_addEvent(minus,'click',this.removeFromCart.bind(this))
+						// sb.sb_addProperty(add,'class','hr-size-fl-xxx-sm cursor-pointer float-left vt-size-fd-bt d-inline-block  bg-light bd-bottom-right-rad-fd-xx-bt bd-top-right-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center font-wt-bolder  font-fd-xx-tn pos-rel')
+						// sb.sb_addProperty(add,'id',ct)
+						// sb.sb_addEvent(add,'click',this.addToCart.bind(this))
+						// sb.sb_addProperty(input,'class','vt-size-fd-bt float-left bg-secondary font-fd-xx-tn text-align-center fg-light font-wt-bolder d-inline-block hr-size-fd-md pd-fd-xx-tn bd-fd-secondary-xx-bt ')
+						sb.sb_addProperty(rm,'class',' font-fd-x-tn text-align-center fg-secondary font-wt-bolder pd-fd-xxx-tn d-inline-block hr-size-fd-xx-sm pos-rel right-offset-fl-bt top-offset-fl-xxx-tn ')
+						// sb.sb_addProperty(input,'placeholder','0')
+						// sb.sb_addEvent(input,'input',this.updateCart.bind(this))
+						sb.sb_addProperty(small,'class','pd-left-fd-xx-tn d-block pos-rel mg-top-fd-tn')
+						sb.sb_addProperty(smallSp,'class','d-inline-block font-wt-bolder fg-secondary font-fd-xx-tn pos-rel')
+						sb.sb_addProperty(priceSp,'class','d-inline-block font-wt-bolder fg-secondary font-fd-xx-tn pos-rel')
+						sb.sb_addProperty(st,'class','clearfix')
+						
+						sb.sb_addProperty(sp,'class','hr-size-fl-xx-sm d-inline-block float-left')
+						sb.sb_addProperty(sp2,'class','hr-size-fl-md pd-left-fl-bt font-fd-x-tn d-inline-block float-left')
+						sb.sb_addProperty(sp3,'class','hr-size-fl-xxx-tn d-inline-block float-left')
+						sb.sb_insertInner(rm,cart[p].productQty+'x')
+						sb.sb_insertInner(sp2,cart[p].productName)
+						// sb.sb_insertInner(minus,'-')
+						sb.sb_insertInner(input,cart[p].productQty)
+						// sb.sb_insertInner(add,'+')
+						sb.sb_insertInner(priceSp,'R'+cart[p].productPrice)
+					
+						
+						
+					
+						sb.sb_addChild(sp,img)
+						
+						// sb.sb_addChild(sp3,minus)
+						// sb.sb_addChild(sp3,input)
+						// sb.sb_addChild(sp3,add)
+						sb.sb_addChild(sp3,rm)
+						// sb.sb_addChild(sp3,fm)
+						// sb.sb_addChild(small,smallSp)
+						sb.sb_addChild(small,priceSp)
+						sb.sb_addChild(sp2,small)
+						
+						
+						
+						sb.sb_addChild(li,sp3)
+						sb.sb_addChild(li,sp2)
+						sb.sb_addChild(li,sp)
+						sb.sb_addChild(li,st)
+						sb.sb_addChild(lst,li)
+						
+						
+					}
+
+				
+
+
+
+					sb.sb_addProperty(stageContent,'class','hr-size-fl-xx-lg mg-bottom-fd-hg mg-auto')
+					sb.sb_addProperty(legend,'class','bg-secondary  bd-left-fd-dark-bt pd-left-fd-xxx-tn hr-size-fl-lg fg-light font-wt-bolder mg-bottom-fd-md font-fd-tn ')
+					sb.sb_addProperty(address,'class','bg-secondary mg-top-fd-tn bd-left-fd-dark-bt pd-left-fd-xxx-tn hr-size-fl-lg fg-light font-wt-bolder mg-bottom-fd-xxx-sm font-fd-tn ')
+					sb.sb_addProperty(paymethod,'class','bg-secondary bd-left-fd-dark-bt pd-left-fd-xxx-tn hr-size-fl-lg fg-light font-wt-bolder mg-bottom-fd-xxx-sm font-fd-tn ')
+					sb.sb_addProperty(addressD,'class','mg-bottom-fd-xxx-sm font-fd-xx-tn')
+					sb.sb_addProperty(paymentD,'class','mg-bottom-fd-xxx-sm font-fd-xx-tn')
+					
+
+					sb.sb_insertInner(legend,'Order Summary')
+					sb.sb_insertInner(address,'Delivery Address')
+					sb.sb_insertInner(paymethod,'Payment Method')
+					sb.sb_insertInner(addressD,deliverydetails)
+					sb.sb_insertInner(paymentD,paymentdetails)
+					sb.sb_insertInner(els.main,'')
+					
+					sb.sb_addChild(stageContent,legend)
+					sb.sb_addChild(stageContent,lst)
+					sb.sb_addChild(stageContent,address)
+					sb.sb_addChild(stageContent,addressD)
+					sb.sb_addChild(stageContent,paymethod)
+					sb.sb_addChild(stageContent,paymentD)
+					// sb.sb_addChild(stageContent,optionsForm)
+					
+					sb.sb_addChild(els.main,stageContent)
+
+
+					sb.sb_insertInner(els.buttons[tool.identifiers.steps['confirm'].previous],' ')
+					sb.sb_addChild(els.buttons[tool.identifiers.steps['confirm'].previous],sb.sb_copyDeep(els.completed))
+					sb.sb_addChild(els.buttons['confirm'],els.active)
+
+					tool.identifiers.current = 'confirm'
+					tool.identifiers.steps[tool.identifiers.current].completed = true
+
+					tool.identifiers.steps['confirm'].called = true
+				},
+
+				order: function(tool,els){
+
+					var sb = that.sb
+
+					var order = sb.sb_jsonToJs(localStorage.order)
+					var order = sb.sb_jsToJson(order)
+					console.log('The Order Function runs, about to submit the order')
+
+					var url = 'https://smarfoapi.herokuapp.com/smarfo/order'
+					//var url = 'http://localhost:3000/smarfo/order'
+
+					success = success 
+					fail = fail
+					type = 'json'
+					method = 'post'
+					
+					that.messenger({url: url,data:order,success: success.bind(this),fail: fail.bind(),type: type,method:method})
+					
+					function success(data){
+
+						console.log('The order data from the server')
+						localStorage.removeItem('cart')
+						localStorage.removeItem('ordercollects')
+						localStorage.removeItem('order')
+						console.log('LOCAL STORAGE')
+						console.log(localStorage)
+						console.log(data)
+
+						var placedOder = sb.sb_jsonToJs(data)
+
+						tool.events.orderPlaced(placedOder)
+					}
+					function fail(data){
+
+						console.log('The failed request order data')
+						console.log(data)
+
+					}
+			
+
+				}
+
+
+
+
+			},
+			identifiers:{
+
+				current: 'cart',
+				steps : {
+
+					cart:{
+						
+						previous: ' ',
+						next: 'delivery',
+						completed: true,
+						called: true
+					},
+					delivery: {
+						
+						previous: 'cart',
+						next: 'payment',
+						completed: false,
+						called: false
+					},
+					payment:{
+			
+						previous: 'delivery',
+						next: 'confirm',
+						completed: false,
+						called: false
+					},
+					confirm:{
+			
+						previous: 'payment',
+						next: 'order',
+						completed: false,
+						called: false
+					},
+
+					order:{
+			
+						previous: 'confirm',
+						next: 'order',
+						completed: false,
+						called: false
+					}
+			
+			
+				}
+				
+			}
+			
+		
+
 		}
 	}
 
@@ -2143,54 +3579,338 @@ Component.prototype.tools = function(id){
 }
 
 
-Component.prototype.cart = function(data){
+Component.prototype.kart = function(data){
 	  
 	  var sb = this.sb
-	  var cart = sb.sb_jsonTojs(localStorage.cart)
-	  
-	  var ol = sb.sb_createElement('ul')
+	  var tools = this.tools('cart')
+	  var cart = sb.sb_createElement('article')
+	  sb.sb_addProperty(cart,'class','hr-size-fl-xx-bg top-offset-vh-xx-tn mg-bottom-fd-hg pos-abs')
+
 	
-	  for(var p = 0; p < cart.length; p++){
-	  	
-	  	   var ol = sb.sb_createElement('li')
-	  	   
-	  	   ol.innerHTML = cart[p].producName 
-	  	   
-	  	   sb.sb_appendChild(ol,ul) 
-	  	   this.messenger({
-	  	   	
-	  	   	  url: 'www.google.com',
-	  	   	  data: 'adwords',
-	  	   	  success: function(data){ 
-	  	   	  
-	  	   	    console.log(data)
-	  	   	    	 this.emit({type: 'component-render-success',data: 'Your component has rendered'})
-	  	   	   },
-	  	   	    
-	  	   	  fail: function(data){
-	  	   	  	
-	  	   	  	this.emit({
-	  	   	  		
-	  	   	  		type: 'log-error',
-	  	   	  		data: data
-	  	   	  		
-	  	   	  	})
-	  	   	  	
-	  	   	  		 this.emit({type: 'component-render-fail',data: 'Your component has rendered'})
-	  	   	  	  
-	  	   	  }
-	  	   	
-	  	   	
-	  	   })
-	  	
-	  }
-	  
-	 
-	  
-	 sb.sb_appendChild(sb.view,ul)
+		var cartstate = tools.functions.getCart()
+
+			
+			if(typeof cartstate.empty !== undefined){
+				
+				if(cartstate.empty === true){
+					
+					var empty = sb.sb_createElement('div')
+					var clear = sb.sb_createElement('div')
+					var img = sb.sb_createElement('img')
+					sb.sb_addProperty(empty,'class','left-offset-fl-x-tn fg-secondary font-fd-xx-sm top-offset-vh-md mg-bottom-fd-hg pos-abs')
+					sb.sb_addProperty(clear,'class','left-offset-0 fg-secondary font-fd-xx-sm top-offset-vh-bt hr-size-fl-xx-bg pos-abs')
+					sb.sb_addProperty(img,'src','img/clear.png')
+					sb.sb_addProperty(img,'class','hr-size-fl-lg mg-left-fl-xxx-tn d-block bd-rad-bt pos-rel')
+					sb.sb_insertInner(empty,'Your cart is empty')
+					sb.sb_addChild(clear,img)
+					sb.sb_addChild(cart,clear)
+					sb.sb_addChild(cart,empty)
+					
+				}else{
+					
+					console.log('THE CART IS')
+					console.log(cartstate.cart)
+
+					var cartDetails = sb.sb_createElement('div')
+					var cartContent = sb.sb_createElement('section')
+					var cartPrice = sb.sb_createElement('span')
+					var cartLabel = sb.sb_createElement('span')
+					var customise = sb.sb_createElement('a')
+					var customiseBtn = sb.sb_createElement('span')
+					
+					var lst = sb.sb_createElement('ul')
+					sb.sb_addProperty(cartDetails,'class','hr-size-fl-xx-bg bx-shadow bg-light font-fd-xx-sm top-offset-vh-xx-tn z-index pos-fd')
+					sb.sb_addProperty(cartContent,'class','pd-left-fl-xxx-sm pd-top-fd-tn  vt-size-fd-xx-tn pos-rel')
+					sb.sb_addProperty(cartPrice,'class','fg-secondary d-block mg-bottom-fd-x-bt  font-fd-sm  pos-rel')
+					sb.sb_addProperty(cartLabel,'class','fg-general d-block font-fd-x-tn mg-left-fd-x-sm  pos-rel')
+					sb.sb_addProperty(cart,'class','hr-size-fl-xx-bg top-offset-vh-x-sm mg-bottom-fd-hg pos-abs')
+					sb.sb_addProperty(customise,'class','link d-block pos-fd hr-size-fl-xx-bg bottom-offset-0 bg-light pd-top-fd-xxx-sm pd-bottom-fd-xx-bt z-index')
+					// sb.sb_addProperty(customise,'href','checkout.html')
+				
+					
+					sb.sb_addProperty(customiseBtn,'class','d-inline-block font-fd-x-tn pd-top-fd-xx-tn text-align-center pd-bottom-fd-xx-tn bg-secondary hr-size-fl-xx-bg fg-light')
+					sb.sb_insertInner(customiseBtn,'Checkout')
+					var totalPrice = 0;
+
+					for(var p = 0; p < cartstate.cart.length; p++){
+
+						var price = cartstate.cart[p].productPrice * cartstate.cart[p].productQty
+						totalPrice += price
+					
+					}
+
+					sb.sb_insertInner(cartPrice,'R '+totalPrice.toFixed(2))
+					sb.sb_insertInner(cartLabel,'Total Price')
+					sb.sb_addChild(cartDetails,cartContent)
+					sb.sb_addChild(cartContent,cartPrice)
+					sb.sb_addChild(cartContent,cartLabel)
+		            sb.sb_addChild(customise,customiseBtn)
+
+					for(var p = 0; p < cartstate.cart.length; p++){
+
+						let li = sb.sb_createElement('li')
+						sb.sb_addProperty(li,'class','hr-size-fl-xx-bg cursor-pointer fd-font-x-tn mg-bottom-fd-tn pd-left-fl-bt bg-light pos-rel d-block bd-bottom-fd-secondary-xx-bt pd-bottom-fd-tn pd-top-fd-tn')
+						// sb.sb_addProperty(li,'data-navigata-page','detail')
+						// sb.sb_addProperty(li,'data-navigata-data','[{data: '+itemData.item_id+',page: detail,endpoint: /detail}]')
+
+
+
+
+						let sp = sb.sb_createElement('span')
+						let sp2 = sb.sb_createElement('span')
+						let sp3 = sb.sb_createElement('span')
+						let img = sb.sb_createElement('img')
+						let input = sb.sb_createElement('span')
+						let rm = sb.sb_createElement('span')
+						let st = sb.sb_createElement('strong')
+						let small = sb.sb_createElement('small')
+						let smallSp = sb.sb_createElement('span')
+						let priceSp = sb.sb_createElement('span')
+						let minus = sb.sb_createElement('input')
+						let add = sb.sb_createElement('input')
+			
+						var fm = sb.sb_createElement('form')
+						var inputId = sb.sb_createElement('input')
+						var inputPrice = sb.sb_createElement('input')
+						var inputName = sb.sb_createElement('input')
+			
+						
+						sb.sb_addProperty(inputId,'type','hidden')
+						sb.sb_addProperty(inputId,'name','product_id')
+						sb.sb_addProperty(inputId,'value',cartstate.cart[p].productId)
+			
+						sb.sb_addProperty(inputPrice,'type','hidden')
+						sb.sb_addProperty(inputPrice,'name','product_price')
+						sb.sb_addProperty(inputPrice,'value',cartstate.cart[p].productPrice)
+			
+						
+						sb.sb_addProperty(inputName,'type','hidden')
+						sb.sb_addProperty(inputName,'name','product_name')
+						sb.sb_addProperty(inputName,'value',cartstate.cart[p].productName)
+			
+						// sb.sb_addProperty(input,'type','number')
+						// sb.sb_addProperty(input,'name','product_qty')
+						// sb.sb_addProperty(input,'value',cartstate.cart[p].productQty)
+						
+			
+						sb.sb_addProperty(minus,'type','button')
+						sb.sb_addProperty(minus,'name','remove_product')
+						sb.sb_addProperty(minus,'value','-')
+			
+						sb.sb_addProperty(add,'type','button')
+						sb.sb_addProperty(add,'name','add_product')
+						sb.sb_addProperty(add,'value','+')
+			
+						sb.sb_addChild(fm,minus)
+						sb.sb_addChild(fm,inputId)
+						sb.sb_addChild(fm,inputPrice)
+						sb.sb_addChild(fm,inputName)
+						sb.sb_addChild(fm,input)
+						sb.sb_addChild(fm,add)
+						sb.sb_addChild(fm,st)
+					
+			
+			
+						sb.sb_addProperty(img,'src','img/fish.jpg')
+						sb.sb_addProperty(img,'class','hr-size-fl-xx-md bd-rad-bt pos-rel')
+						sb.sb_addProperty(fm,'class','hr-fl-size-xx-bg mg-top-fl-x-tn mg-bottom-fd-sm pos-rel')
+						// sb.sb_addProperty(fm,'id',ct+'-form')
+						sb.sb_addProperty(minus,'class','hr-size-fl-xxx-sm cursor-pointer float-left vt-size-fd-bt d-inline-block bg-light bd-bottom-left-rad-fd-xx-bt bd-top-left-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center  font-fd-xx-tn font-wt-bolder  pos-rel')
+						// sb.sb_addProperty(minus,'id',ct)
+						// sb.sb_addEvent(minus,'click',this.removeFromCart.bind(this))
+						sb.sb_addProperty(add,'class','hr-size-fl-xxx-sm cursor-pointer float-left vt-size-fd-bt d-inline-block  bg-light bd-bottom-right-rad-fd-xx-bt bd-top-right-rad-fd-xx-bt bd-fd-secondary-xx-bt pd-fd-xx-tn text-align-center font-wt-bolder  font-fd-xx-tn pos-rel')
+						// sb.sb_addProperty(add,'id',ct)
+						// sb.sb_addEvent(add,'click',this.addToCart.bind(this))
+						sb.sb_addProperty(input,'class','vt-size-fd-bt float-left bg-secondary font-fd-xx-tn text-align-center fg-light font-wt-bolder d-inline-block hr-size-fd-md pd-fd-xx-tn bd-fd-secondary-xx-bt ')
+						sb.sb_addProperty(rm,'class',' font-fd-tn text-align-center fg-red font-wt-bolder pd-fd-xxx-tn bd-rad-xxx-tn d-inline-block hr-size-fd-xx-sm pos-abs right-offset-fl-x-bt top-offset-0')
+						// sb.sb_addProperty(input,'placeholder','0')
+						// sb.sb_addEvent(input,'input',this.updateCart.bind(this))
+						sb.sb_addProperty(small,'class','pd-left-fd-xx-tn d-block pos-abs mg-top-fd-tn')
+						sb.sb_addProperty(smallSp,'class','d-inline-block font-wt-bolder fg-secondary font-fd-xx-tn pos-rel')
+						sb.sb_addProperty(priceSp,'class','d-inline-block font-wt-bolder fg-secondary font-fd-xx-tn pos-rel')
+						sb.sb_addProperty(st,'class','clearfix')
+						
+						sb.sb_addProperty(sp,'class','hr-size-fl-xx-sm mg-right-fl-bt d-inline-block float-left')
+						sb.sb_addProperty(sp2,'class','hr-size-fl-xxx-sm font-fd-x-tn d-inline-block float-left')
+						sb.sb_addProperty(sp3,'class','hr-size-fl-xxx-sm d-inline-block float-left')
+						sb.sb_insertInner(rm,'x')
+						sb.sb_insertInner(sp2,cartstate.cart[p].productName)
+						sb.sb_insertInner(minus,'-')
+						sb.sb_insertInner(input,cartstate.cart[p].productQty)
+						sb.sb_insertInner(add,'+')
+						sb.sb_insertInner(priceSp,'R'+cartstate.cart[p].productPrice)
+					
+						
+						
+					
+						sb.sb_addChild(sp,img)
+						
+						// sb.sb_addChild(sp3,minus)
+						// sb.sb_addChild(sp3,input)
+						// sb.sb_addChild(sp3,add)
+						sb.sb_addChild(sp3,rm)
+						sb.sb_addChild(sp3,fm)
+						// sb.sb_addChild(small,smallSp)
+						sb.sb_addChild(small,priceSp)
+						sb.sb_addChild(sp2,small)
+						
+						
+						
+						sb.sb_addChild(li,sp)
+						sb.sb_addChild(li,sp2)
+						sb.sb_addChild(li,sp3)
+						sb.sb_addChild(li,st)
+						sb.sb_addChild(lst,li)
+						
+						
+					}
+
+					
+					sb.sb_addEvent(customise,'click',tools.events.startOrder.bind(this,tools))
+
+					this.emit({type:'component-resource-creation-done',data: cartDetails})
+					this.emit({type:'component-resource-creation-done',data: customise})
+					sb.sb_addChild(cart,lst)
+						
+
+					
+
+				}
+				
+			}else{
+
+				console.log('THE CART CODE')
+			}
 
 	 
+		this.emit({type:'component-resource-creation-done',data: cart})
+	 
 	
+}
+
+
+Component.prototype.checkout = function(data){
+	  
+	var sb = this.sb
+
+	
+	
+		var tools = this.tools('checkout')
+
+		var mainEl = sb.sb_createElement('div')
+		var stages = sb.sb_createElement('div')
+		var stagesBg = sb.sb_createElement('div')
+		var cartStage = sb.sb_createElement('span')
+		var cartStageBtn = sb.sb_createElement('button')
+		var cartStageLb = sb.sb_createElement('h1')
+		var deliveryStage = sb.sb_createElement('span')
+		var deliveryStageBtn = sb.sb_createElement('button')
+		var deliveryStageLb = sb.sb_createElement('h1')
+		var paymentStage = sb.sb_createElement('span')
+		var paymentStageBtn = sb.sb_createElement('button')
+		var  paymentStageLb = sb.sb_createElement('h1')
+		var confirmStage = sb.sb_createElement('span')
+		var confirmStageBtn = sb.sb_createElement('button')
+		var confirmStageLb = sb.sb_createElement('h1')
+		var activeStage = sb.sb_createElement('span')
+		var completed = sb.sb_createElement('span')
+		var aCircleLf = sb.sb_createElement('span')
+		var aCircleMd = sb.sb_createElement('span')
+		var aCircleRt = sb.sb_createElement('span')
+
+		var customise = sb.sb_createElement('span')
+		var customiseBtn = sb.sb_createElement('span')
+		
+		sb.sb_addProperty(stages,'class',' z-index bg-general-alt top-offset-vh-x-tn left-offset-fl-xxx-tn pos-fd')
+		sb.sb_addProperty(stagesBg,'class','hr-size-fd-hi-2 bg-dark left-offset-fd-x-tn mg-top-fd-x-tn vt-size-fd-xx-bt pos-abs')
+		sb.sb_addProperty(cartStage,'class','d-inline-block font-fd-xxx-tn fg-dark-lt')
+		sb.sb_addProperty(deliveryStage,'class','d-inline-block font-fd-xxx-tn fg-dark-lt')
+		sb.sb_addProperty(paymentStage,'class','d-inline-block font-fd-xxx-tn fg-dark-lt')
+		sb.sb_addProperty(confirmStage,'class','d-inline-block font-fd-xxx-tn fg-dark-lt')
+		sb.sb_addProperty(aCircleLf,'class',' left-offset-fd-xxx-tn d-block mg-right-fd-xx-sm bd-rad-fl-md bd-none dots bg-light pos-abs')
+		sb.sb_addProperty(aCircleMd,'class','left-offset-fd-x-tn mg-right-fd-xx-sm bd-rad-fl-md bd-none dots bg-light pos-abs')
+		sb.sb_addProperty(aCircleRt,'class','left-offset-fd-xxx-sm mg-right-fd-xx-sm bd-rad-fl-md bd-none dots bg-light pos-abs')
+		sb.sb_addProperty(cartStageBtn,'class','mg-bottom-fd-x-tn vt-size-fd-bt  mg-right-fd-sm bd-rad-fl-md bd-none hr-size-fd-md bg-dk-green fg-light pos-rel')
+		sb.sb_addProperty(deliveryStageBtn,'class','mg-bottom-fd-x-tn vt-size-fd-bt mg-right-fd-sm bd-rad-fl-md bd-none hr-size-fd-md bg-dk-green fg-light pos-rel')
+		sb.sb_addProperty(paymentStageBtn,'class','mg-bottom-fd-x-tn vt-size-fd-bt   mg-right-fd-sm bd-rad-fl-md bd-none hr-size-fd-md bg-dk-green fg-light pos-rel')
+		sb.sb_addProperty(confirmStageBtn,'class','mg-bottom-fd-x-tn vt-size-fd-bt bd-rad-fl-md bd-none hr-size-fd-md bg-dk-green fg-light pos-rel')
+		sb.sb_addProperty(customise,'class','cursor-pointer link d-block pos-fd hr-size-fl-xx-bg bottom-offset-0 bg-light  pd-top-fd-xx-bt z-index')
+		sb.sb_addProperty(mainEl,'class','hr-size-fl-xx-bg mg-bottom-fd-hg pos-abs top-offset-vh-x-sm')
+		sb.sb_addProperty(completed,'class','font-fd-x-tn form__checkbox_button')
+		// sb.sb_addProperty(customise,'href','checkout.html')
+					
+						
+		sb.sb_addProperty(customiseBtn,'class','d-inline-block font-fd-x-tn pd-top-fd-xx-tn text-align-center  pd-bottom-fd-xx-tn  bg-secondary hr-size-fl-xx-bg fg-light')
+		sb.sb_insertInner(customiseBtn,'Procceed')
+
+		sb.sb_insertInner(cartStageLb,'Cart')
+		sb.sb_insertInner(deliveryStageLb,'Delivery')
+		sb.sb_insertInner(paymentStageLb,'Payment')
+		sb.sb_insertInner(confirmStageLb,'Confirm')
+		sb.sb_insertInner(completed,'&#10003;')
+
+
+
+
+
+		sb.sb_addChild(stages,stagesBg)
+
+		sb.sb_addChild(stages,cartStage)
+		sb.sb_addChild(cartStageBtn,completed)
+		sb.sb_addChild(cartStage,cartStageBtn)
+		sb.sb_addChild(cartStage,cartStageLb)
+
+		sb.sb_addChild(stages,deliveryStage)
+		sb.sb_addChild(deliveryStage,deliveryStageBtn)
+		sb.sb_addChild(deliveryStageBtn,activeStage)
+		sb.sb_addChild(deliveryStage,deliveryStageLb)
+
+
+		sb.sb_addChild(stages,paymentStage)
+		sb.sb_addChild(paymentStage,paymentStageBtn)
+		sb.sb_addChild(paymentStage,paymentStageLb)
+
+
+
+
+		sb.sb_addChild(stages,confirmStage)
+		sb.sb_addChild(confirmStage,confirmStageBtn)
+		sb.sb_addChild(confirmStage,confirmStageLb)
+
+		sb.sb_addChild(activeStage,aCircleLf)
+		sb.sb_addChild(activeStage,aCircleMd)
+		sb.sb_addChild(activeStage,aCircleRt)
+		sb.sb_addChild(customise,customiseBtn)
+
+		console.log('tools')
+		console.log(tools)
+
+		var els = {
+
+			main: mainEl,
+			active: activeStage,
+			completed: completed,
+			buttons: {
+				cart: cartStageBtn,
+				delivery: deliveryStageBtn,
+				payment: paymentStageBtn,
+				confirm: confirmStageBtn
+			}
+
+		}
+
+		sb.sb_addEvent(customise,'click',tools.events.loadNext.bind(this,tools,els))
+		
+
+		this.emit({type:'component-resource-creation-done',data: stages})
+		this.emit({type:'component-resource-creation-done',data: mainEl})
+		this.emit({type:'component-resource-creation-done',data: customise})
+		customise.click(tools,els)
+
+
+
+   
+  
 }
 
 Component.prototype.menulist = function(data){
@@ -2200,7 +3920,9 @@ Component.prototype.menulist = function(data){
 	
 
 	var catlist = sb.sb_createElement('article')
-	var url = 'https://smarfoapi.herokuapp.com'+data.endpoint+'/'+ data.data   
+	var url = 'https://smarfoapi.herokuapp.com'+data.endpoint+'/'+ data.data 
+	var menuUrl = 'https://smarfoapi.herokuapp.com/smarfo/menu' 
+	//var url = 'http://localhost:3000'+data.endpoint+'/'+ data.data   
 
 
 	this.messenger({url: url,data:'data',success: success.bind(this),fail: fail.bind(this)})
@@ -2208,7 +3930,7 @@ Component.prototype.menulist = function(data){
 
 	function success(data){
 
-		console.log('The return json data')
+		console.log('The return json data MenuList success')
 		console.log(data)
 		let menu = sb.sb_jsonToJs(data)
 		if(menu.categories){
@@ -2237,6 +3959,99 @@ Component.prototype.menulist = function(data){
 
 		}})
 
+		this.messenger({url: menuUrl,data:'data',success: menuSuccess.bind(this),fail: fail.bind(this)})
+
+
+
+	}
+
+	function menuSuccess(data){
+
+		console.log('The return json data MenuList menu success')
+		console.log(data)
+
+		var sb = this.sb
+		let menu = sb.sb_jsonToJs(data)
+		let menuList = menu.categories
+
+		var modalList = sb.sb_createElement('ul')
+
+		sb.sb_addProperty(modalList,'class','list list--hr list--none')
+	   //  var ing = sb.sb_createElement('div')
+	   //  sb.sb_addProperty(desc,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn')
+	   //  sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
+	   //   sb.sb_insertInner(desc,data.description)
+
+	   for( it in menuList){
+
+		   var li = sb.sb_createElement('li')
+		   var sp = sb.sb_createElement('span')
+		   sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small cursor-pointer pd-left-fd-tn pd-top-fd-bt')
+		   sb.sb_addProperty(sp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
+
+		   sb.sb_insertInner(sp,menuList[it].Name)
+		   sb.sb_addChild(li,sp)
+		   sb.sb_addChild(modalList,li)
+
+	   }
+
+		var actions = sb.sb_createElement('div')
+		var actionsCustomise = sb.sb_createElement('section')
+		var actionsCart = sb.sb_createElement('section')
+		var customise = sb.sb_createElement('div')
+		var customiseBtn = sb.sb_createElement('button')
+
+		sb.sb_addProperty(actions,'class','pos-fd hr-size-fl-xx-bg bx-shadow bottom-offset-0 bg-light pd-top-fd-xxx-sm pd-bottom-fd-xx-tn z-index')
+		sb.sb_addProperty(actionsCustomise,'class','pos-rel hr-size-fl-sm d-inline-block')
+		sb.sb_addProperty(actionsCart,'class','pos-rel hr-size-fl-md d-inline-block')
+		sb.sb_addProperty(customiseBtn,'class','d-inline-block mg-left-fl-xxx-tn  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-rel btn bg-secondary fg-light')
+		sb.sb_insertInner(customiseBtn,'Menu')
+
+		sb.sb_addChild(actionsCustomise,customise)
+		sb.sb_addChild(customise,customiseBtn)
+		sb.sb_addChild(actions,actionsCustomise)
+		
+
+
+
+		var modals = [{
+
+			activator: {
+					
+				activate: customiseBtn
+			},
+			parent:{
+
+				class: 'modal',
+				id: 'showmenu'
+
+			},
+			head: {
+				head: false
+			},
+			content: {
+				class: 'modal__content bd-top-right-rad-fd-xx-bt modal__content--size-fl-xxx-md modal__content--pos-abs modal__content--left-offset-0 modal__content--bottom-offset-0 modal__content--bd-rad-fd-tn modal__content--bg-light'
+			},
+			body: {
+				body: modalList,
+				class: 'modal__body'
+			},
+			foot: {
+				foot: false
+			}
+
+
+		}]
+
+		
+			
+		 
+		
+		
+		this.emit({type:'component-resource-creation-done',data: actions})
+		this.emit({type:'create-modal',data: modals})
+		
+
 	}
 	
 
@@ -2257,8 +4072,8 @@ Component.prototype.dashboard = function(data){
 	var sb = this.sb
 	var menulist = sb.sb_createElement('article')
 	 sb.sb_addProperty(menulist,'class','top-offset-vh-x-tn pos-rel mg-bottom-fd-hg')
-	//url = 'https://smarfoapi.herokuapp.com/smarfo/menu' 
-	var url = 'http://localhost:3000/smarfo/menu' 
+	 var url = 'https://smarfoapi.herokuapp.com/smarfo/menu' 
+	// var url = 'http://localhost:3000/smarfo/menu' 
 
 	this.messenger({url: url,data:'data',success: success.bind(this),fail: fail.bind(this)})
 
@@ -2314,7 +4129,9 @@ Component.prototype.detail = function(data){
 
 	// var catlist = sb.sb_createElement('article')
 	console.log(data.data)
-	var url = 'https://smarfoapi.herokuapp.com/smarfo'+data.endpoint+'/Starters/'+data.data
+
+	var url = 'https://smarfoapi.herokuapp.com/smarfo'+data.endpoint+'/Starters/'+data.data 
+	// var url = 'http://localhost:3000/smarfo'+data.endpoint+'/Starters/'+data.data
 
 	// var sdata = {
 
@@ -2330,7 +4147,7 @@ Component.prototype.detail = function(data){
 		console.log('Successfull request')
 		console.log(data)
 	
-		var data = sb.sb_jsonToJs(data).detail
+		var data = sb.sb_jsonToJs(data)
 		console.log(data)
 
 		
@@ -2352,7 +4169,7 @@ Component.prototype.detail = function(data){
 
 		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg mg-bottom-fd-hg pos-rel top-offset-vh-x-tn')
 		sb.sb_addProperty(product,'class','hr-size-fl-x-bg mg-auto mg-bottom-fd-xx-tn')
-		sb.sb_addProperty(productI,'src','img/starters/'+data.image)
+		sb.sb_addProperty(productI,'src','img/starters/'+data.detail.image)
 		sb.sb_addProperty(productI,'class','hr-size-fl-xx-bg ')
 		sb.sb_addProperty(actions,'class','pos-fd hr-size-fl-xx-bg bx-shadow bottom-offset-0 bg-light pd-top-fd-xxx-sm pd-bottom-fd-xx-tn z-index')
 		sb.sb_addProperty(actionsCustomise,'class','pos-rel hr-size-fl-sm d-inline-block')
@@ -2378,16 +4195,16 @@ Component.prototype.detail = function(data){
 		
 		sb.sb_addProperty(inputId,'type','hidden')
 		sb.sb_addProperty(inputId,'name','product_id')
-		sb.sb_addProperty(inputId,'value','sampleid')
+		sb.sb_addProperty(inputId,'value',data.item_id)
 
 		sb.sb_addProperty(inputPrice,'type','hidden')
 		sb.sb_addProperty(inputPrice,'name','product_price')
-		sb.sb_addProperty(inputPrice,'value','sampleprice')
+		sb.sb_addProperty(inputPrice,'value',data.price)
 
 		
 		sb.sb_addProperty(inputName,'type','hidden')
 		sb.sb_addProperty(inputName,'name','product_name')
-		sb.sb_addProperty(inputName,'value','sampleproducts')
+		sb.sb_addProperty(inputName,'value',data.Name)
 
 
 
@@ -2432,7 +4249,7 @@ Component.prototype.detail = function(data){
 		 sb.sb_addProperty(ing,'class','list list--hr list--none')
 		 sb.sb_addProperty(desc,'class','accordion__content d-none hr-size-fl-x-bg mg-auto accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn')
 		 sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-x-b mg-auto accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
-		  sb.sb_insertInner(desc,data.description)
+		  sb.sb_insertInner(desc,data.detail.description)
 
 		// Modal
 
@@ -2444,21 +4261,21 @@ Component.prototype.detail = function(data){
 		//  sb.sb_addProperty(ing,'class','accordion__content d-none hr-size-fl-md accordion__content--bg-general font-fd-xx-tn mg-bottom-fd-xxx-tn ')
 		//   sb.sb_insertInner(desc,data.description)
 
-		for(var i = 0; i < data.ingredients.length; i++){
+		for(var i = 0; i < data.detail.ingredients.length; i++){
 
 			var li = sb.sb_createElement('li')
 			var sp = sb.sb_createElement('span')
 			sb.sb_addProperty(li,'class','list__item list__item--ve list__item--border-bottom-secondary list__item--marg-offset-bottom-small cursor-pointer pd-left-fd-tn pd-top-fd-bt')
 			sb.sb_addProperty(sp,'class','mg-left-fl-tn d-inline-block mg-top-fd-bt font-fd-xx-tn')
 
-			sb.sb_insertInner(sp,data.ingredients[i])
+			sb.sb_insertInner(sp,data.detail.ingredients[i])
 			sb.sb_addChild(li,sp)
 			sb.sb_addChild(ing,li)
 
 		}
 		
 
-		 for(v in data.variants){
+		 for(v in data.detail.variants){
 
 			 var li = sb.sb_createElement('li')
 			 var sp = sb.sb_createElement('span')
@@ -2482,7 +4299,7 @@ Component.prototype.detail = function(data){
 
 			 sb.sb_addChild(optionsForm,optionList)
 
-			 for(it in data.variants[v]){
+			 for(it in data.detail.variants[v]){
 
 				var uli = sb.sb_createElement('li')
 				var usp = sb.sb_createElement('span')   
@@ -2561,12 +4378,12 @@ Component.prototype.detail = function(data){
 				}
 			 modal.head = {
 				 head: true,
-				 buttonText: 'Done',
+				 buttonText: '',
 				 title: v,
 				 class: 'modal__head ',
 				 child: {
 
-					class: 'modal__close-top-btn bx-shadow  modal__button close-modal'
+					class: ''
 				 }
 				
 			 }
@@ -2708,7 +4525,8 @@ Component.prototype.bargain = function(data){
 
 	// var catlist = sb.sb_createElement('article')
 	console.log(data.data)
-	var url = 'http://localhost:3000/smarfo/bargain'
+	var url = 'https://smarfoapi.herokuapp.com/smarfo/bargain'
+	//var url = 'http://localhost:3000/smarfo/bargain'
 
 	// var sdata = {
 
@@ -2732,7 +4550,9 @@ Component.prototype.bargain = function(data){
 		var product = sb.sb_createElement('div')
 		var productI = sb.sb_createElement('img')
 		 var bargain = sb.sb_createElement('div')
-		 var bTitle = sb.sb_createElement('h1')
+		 var bA = sb.sb_createElement('section')
+		 var bAtitleO = sb.sb_createElement('h2')
+		 var bAtitleT = sb.sb_createElement('span')
 		 var bTag = sb.sb_createElement('span')
 		 var bPrice = sb.sb_createElement('span')
 		 var bInfo = sb.sb_createElement('div')
@@ -2745,7 +4565,7 @@ Component.prototype.bargain = function(data){
 		var customiseBtn = sb.sb_createElement('button')
 	
 
-		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg top-offset-vh-xx-tn mg-bottom-fd-hg pos-rel')
+		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg top-offset-vh-bt mg-bottom-fd-hg pos-rel')
 		sb.sb_addProperty(product,'class','hr-size-fl-x-bg pos-rel top-offset-vh-bt mg-auto mg-bottom-fd-tn')
 		sb.sb_addProperty(productI,'src','img/starters/'+data.image)
 		sb.sb_addProperty(productI,'class','hr-size-fl-xx-bg')
@@ -2756,19 +4576,25 @@ Component.prototype.bargain = function(data){
 		sb.sb_addProperty(bPercentP,'class','d-block')
 		sb.sb_addProperty(bPercentO,'class','d-block')
 		sb.sb_addProperty(bargain,'class','hr-size-fl-xx-bg pos-rel  mg-auto mg-top-fd-tn mg-bottom-fd-tn')
-		sb.sb_addProperty(bTitle,'class','pos-abs  left-offset-fl-md  mg-bottom-fd-xxx-tn')
-		sb.sb_addProperty(bTag,'class',' pos-abs d-block left-offset-fl-x-bt top-offset-vh-bt mg-bottom-fd-xxx-tn font-fd-xx-tn fg-secondary')
-		sb.sb_addProperty(bPrice,'class','pos-abs d-block left-offset-fl-bt top-offset-vh-xxx-tn font-fd-tn')
-		sb.sb_insertInner(bTitle,'Grab our daily bargain')
+		sb.sb_addProperty(bA,'class','pos-abs  left-offset-fl-xxx-sm  mg-bottom-fd-xxx-tn portfolio-title-container')
+		sb.sb_addProperty(bAtitleO,'class','portfolio-title')
+		sb.sb_addProperty(bAtitleT,'class','item-adjust')
+		sb.sb_addProperty(bTag,'class',' pos-abs d-block left-offset-fl-bt top-offset-vh-xxx-tn mg-bottom-fd-xxx-tn font-fd-x-tn fg-secondary')
+		sb.sb_addProperty(bPrice,'class','pos-abs d-block left-offset-fl-xx-sm top-offset-vh-xx-tn font-fd-tn')
+		// sb.sb_insertInner(bTitle,'Grab our daily bargain')
+		sb.sb_insertInner(bAtitleO,'Grab our daily bargain')
+		sb.sb_insertInner(bAtitleT,'@  only')
 		sb.sb_insertInner(bTag,'Only')
 		sb.sb_insertInner(bPrice,data.price)
 		sb.sb_insertInner(bName,data.name)
 		sb.sb_insertInner(bPercentP,data.percent)
 		sb.sb_insertInner(bPercentO,'off')
 
+		sb.sb_addChild(bA,bAtitleO)
+		sb.sb_addChild(bA,bAtitleT)
 
-		sb.sb_addChild(bargain,bTitle)
-		sb.sb_addChild(bargain,bTag)
+		sb.sb_addChild(bargain,bA)
+		// sb.sb_addChild(bargain,bTag)
 		sb.sb_addChild(bargain,bPrice)
 
 		sb.sb_addChild(bInfo,bName)
@@ -2779,7 +4605,7 @@ Component.prototype.bargain = function(data){
 		
 		
 	
-		sb.sb_addProperty(customiseBtn,'class','d-inline-block action-btn hr-size-fl-x-tn  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-fd btn bg-secondary fg-light')
+		sb.sb_addProperty(customiseBtn,'class','d-inline-block action-btn hr-size-fl-x-sm  pd-top-fd-xx-tn pd-bottom-fd-xx-tn pos-fd btn bg-secondary fg-light')
 		sb.sb_insertInner(customiseBtn,'Order Now')
 	
 
@@ -2834,13 +4660,14 @@ Component.prototype.uprofile = function(data){
 
 	var loginData = {
    	
-	 	username: 'mashelesurprise@gmail.com',
+	 	email: 'masanabila@gmail.com',
 	 	password: '123456'
 	
      }
 
 	loginData = sb.sb_jsToJson(loginData)
-	var url = 'http://localhost:3000/smarfo/user'
+	var url = 'https://smarfoapi.herokuapp.com/smarfo/login'
+	//  var url = 'http://localhost:3000/smarfo/login'
 
 	type = 'json'
 	method = 'post'
@@ -2850,18 +4677,18 @@ Component.prototype.uprofile = function(data){
 
 	function success(data){
 
-		console.log('Successfull Bargain request')
+		console.log('Successfull user profile request')
 		console.log(data)
 	
-		var data = sb.sb_jsonToJs(data)
+		var data = sb.sb_jsonToJs(data).login
 		console.log(data)
 
 		var userData = {
 
-			email: data.data.email_address,
-			dob: data.data.birth_date,
-			gender: data.data.gender,
-			contact: data.data.mobile_number
+			email: data.email,
+			dob: data.dob,
+			gender: data.gender,
+			contact: data.contact
 
 		}
 		
@@ -2879,26 +4706,26 @@ Component.prototype.uprofile = function(data){
 		var editAvImg = sb.sb_createElement('img')
 		var editAvCont = sb.sb_createElement('div')
 		var editAvatar = sb.sb_createElement('img')
-		var name = data.data.first_name+' '+data.data.last_name
+		var name = data.first_name+' '+data.last_name
 		
 	
 	
 
-		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg top-offset-vh-bt mg-bottom-fd-hg pos-rel')
-		sb.sb_addProperty(bargain,'class','hr-size-fl-xx-bg pos-rel  mg-auto bg-tan vt-size-fd-bt mg-bottom-fd-tn')
-		sb.sb_addProperty(bTitle,'class','pd-left-fl-sm top-offset-fl-bt pd-top-fd-xx-tn  mg-bottom-fd-xxx-tn')
-		sb.sb_addProperty(edit,'class','pos-abs bd-rad-fl-md cursor-pointer top-offset-vh-tn left-offset-fl-xx-md bg-dk-green-lt vt-size-fd-bt hr-size-fd-md')
+		sb.sb_addProperty(productP,'class','hr-size-fl-xx-bg top-offset-vh-xxx-tn mg-bottom-fd-hg pos-rel')
+		sb.sb_addProperty(bargain,'class','hr-size-fl-xx-bg pos-fd z-index box-shadow  mg-auto bg-secondary vt-size-fd-bt mg-bottom-fd-tn')
+		sb.sb_addProperty(bTitle,'class','pd-left-fl-sm top-offset-fl-bt fg-light pd-top-fd-xx-tn  mg-bottom-fd-xxx-tn')
+		sb.sb_addProperty(edit,'class','pos-abs bd-rad-fl-md cursor-pointer top-offset-vh-x-tn left-offset-fl-lg bg-dk-green-lt vt-size-fd-bt hr-size-fd-md')
 		sb.sb_addProperty(editAvImg,'class','hr-size-fl-md cursor-pointer left-offset-fl-tn top-offset-fl-tn pos-rel')
 		sb.sb_addProperty(editAvImg,'src','img/edit.png')
 		sb.sb_addProperty(product,'class','hr-size-fl-x-bg pos-rel top-offset-vh-bt mg-auto mg-bottom-fd-tn')
-		sb.sb_addProperty(avCont,'class','avatar avatar--positon mg-left-fl-x-sm')
+		sb.sb_addProperty(avCont,'class','avatar avatar--positon mg-left-fl-tn')
 		sb.sb_addProperty(avFig,'class','avatar__fig avatar__fig--hr-size-fd-hi-xx-bg avatar__fig--bd-rad-fl-md')
 		sb.sb_addProperty(avImg,'class','avatar__pik avatar__pik--hr-size-fd-hi-xx-bg')
-		sb.sb_addProperty(avImg,'src',data.data.profile_url)
-		sb.sb_addProperty(editAvCont,'class','pos-abs bd-rad-fl-md cursor-pointer top-offset-fl-tn left-offset-fl-md bg-dk-green vt-size-fd  hr-size-fd-xx-sm')
+		sb.sb_addProperty(avImg,'src',data.profile_url)
+		sb.sb_addProperty(editAvCont,'class','pos-abs bd-rad-fl-md cursor-pointer top-offset-fl-tn left-offset-fl-x-md bg-dk-green vt-size-fd  hr-size-fd-xx-sm')
 		sb.sb_addProperty(editAvatar,'class','hr-size-fl-md left-offset-fl-tn top-offset-fl-tn pos-rel')
 		sb.sb_addProperty(editAvatar,'src','img/avataredit.png')
-		sb.sb_addProperty(uname,'class','d-inline-block font-fd-tn mg-top-fd-tn mg-bottom-fd-sm fg-secondary')
+		sb.sb_addProperty(uname,'class','d-inline-block font-fd-tn mg-left-fd-x-tn mg-top-fd-tn mg-bottom-fd-sm fg-secondary')
 		sb.sb_insertInner(bTitle,'Profile')
 		sb.sb_insertInner(uname,name)
 		sb.sb_addProperty(lst,'class','list list--hr list--none')
@@ -2966,7 +4793,6 @@ Component.prototype.uprofile = function(data){
 	
 	
 }
-
 
 
 Component.prototype.manage = function(data){
@@ -3076,6 +4902,337 @@ Component.prototype.manage = function(data){
 		console.log('Failed request')
 		console.log(data)
 		// this.emit({type: 'stop-preloader',data: data})
+
+	}
+	
+	
+}
+
+Component.prototype.orderstatus = function(data){
+	  
+	var sb = this.sb
+
+	
+
+	var url = 'https://smarfoapi.herokuapp.com/smarfo/order/track'
+	// var url = 'http://localhost:3000/smarfo/order/track'
+
+	success = success 
+	fail = fail
+	type = 'json'
+	method = 'post'
+	
+	console.log('About to track an order')
+
+	if(localStorage.orderno && localStorage.login){
+
+		console.log('Order Status Fields Exists')
+		var track = {
+
+			username: sb.sb_jsonToJs(localStorage.getItem('login')).username,
+			orderno: sb.sb_jsonToJs(localStorage.getItem('orderno')).orderno
+
+			
+		}
+
+		track = sb.sb_jsToJson(track)
+		this.messenger({url: url,data:track,success: success.bind(this),fail: fail.bind(),type: type,method:method})
+
+	}
+	
+
+
+
+	
+	
+
+	function success(data){
+
+		var sb = this.sb
+		 var trackresponse = sb.sb_jsonToJs(data)
+
+		 console.log('The track status data')
+		 console.log(trackresponse)
+
+		 if(trackresponse.status){
+
+			
+
+					
+			var received = sb.sb_createElement('article')
+			var trackEst = sb.sb_createElement('section')
+			var trackEstTm = sb.sb_createElement('div')
+			var trackEstOd = sb.sb_createElement('div')
+			
+			 var completed = sb.sb_createElement('span')
+			 var trackEstTmLab = sb.sb_createElement('span')
+			 var trackEstTmClock = sb.sb_createElement('span')
+			 var trackeEstOdLab = sb.sb_createElement('span')
+			 var trackEstOdNm = sb.sb_createElement('span')
+			
+
+			var stages = sb.sb_createElement('div')
+			var stagesLabels = sb.sb_createElement('div')
+			var stagesBgO = sb.sb_createElement('div')
+			var stagesBgT = sb.sb_createElement('div')
+			var stagesBgTr = sb.sb_createElement('div')
+			var stagesBgF = sb.sb_createElement('div')
+			var placedStage = sb.sb_createElement('span')
+			var placedStageBtn = sb.sb_createElement('button')
+			var placedStageLb = sb.sb_createElement('section')
+			var placedStageLbL = sb.sb_createElement('h1')
+			var placedStageLbC = sb.sb_createElement('p')
+			var confirmStage = sb.sb_createElement('span')
+			var confirmStageBtn = sb.sb_createElement('button')
+			var confirmStageLb = sb.sb_createElement('section')
+			var confirmStageLbL = sb.sb_createElement('h1')
+			var confirmStageLbC = sb.sb_createElement('p')
+			var progressStage = sb.sb_createElement('span')
+			var progressStageBtn = sb.sb_createElement('button')
+			var  progressStageLb = sb.sb_createElement('section')
+			var progressStageLbL = sb.sb_createElement('h1')
+			var progressStageLbC = sb.sb_createElement('p')
+			var completedStage = sb.sb_createElement('span')
+			var completedStageBtn = sb.sb_createElement('button')
+			var completedStageLb = sb.sb_createElement('section')
+			var completedStageLbL = sb.sb_createElement('h1')
+			var completedStageLbC = sb.sb_createElement('p')
+			var activeStage = sb.sb_createElement('span')
+			var aCircleLf = sb.sb_createElement('span')
+			var aCircleMd = sb.sb_createElement('span')
+			var aCircleRt = sb.sb_createElement('span')
+
+		
+
+
+			sb.sb_addProperty(stages,'class',' z-index bg-general-alt left-offset-fl-bt top-offset-vh-xx-sm pos-fd')
+			sb.sb_addProperty(stagesLabels,'class',' z-index  left-offset-fl-x-tn pd-top-fd-x-tn top-offset-vh-xx-sm pos-fd')
+			
+			
+			sb.sb_addProperty(stagesBgF,'class','vt-size-fl-md bg-dark-lt left-offset-fd-x-tn mg-top-fd-xxx-tn hr-size-fd-xxx-tn pos-abs')
+			sb.sb_addProperty(placedStage,'class','d-block font-fd-xxx-tn mg-bottom-fd-xx-sm fg-dark-lt')
+			sb.sb_addProperty(confirmStage,'class','d-block font-fd-xxx-tn mg-bottom-fd-xx-sm fg-dark-lt')
+			sb.sb_addProperty(progressStage,'class','d-block font-fd-xxx-tn mg-bottom-fd-xx-sm fg-dark-lt')
+			sb.sb_addProperty(completedStage,'class','d-block font-fd-xxx-tn  fg-dark-lt')
+			sb.sb_addProperty(aCircleLf,'class',' left-offset-fd-xxx-tn d-block mg-right-fd-xx-sm bd-rad-fl-md bd-none dots bg-light pos-abs')
+			sb.sb_addProperty(aCircleMd,'class','left-offset-fd-x-tn mg-right-fd-xx-sm bd-rad-fl-md bd-none dots bg-light pos-abs')
+			sb.sb_addProperty(aCircleRt,'class','left-offset-fd-xxx-sm mg-right-fd-xx-sm bd-rad-fl-md bd-none dots bg-light pos-abs')
+			sb.sb_addProperty(placedStageBtn,'class','mg-bottom-fd-x-tn d-inline-block vt-size-fd-bt  mg-right-fd-xx-sm bd-rad-fl-md bd-none hr-size-fd-md bg-dk-green fg-light pos-rel')
+			sb.sb_addProperty(confirmStageBtn,'class','mg-bottom-fd-x-tn d-inline-block vt-size-fd-bt mg-right-fd-xx-sm bd-rad-fl-md bd-none hr-size-fd-md bg-dk-green fg-light pos-rel')
+			sb.sb_addProperty(progressStageBtn,'class','mg-bottom-fd-x-tn d-inline-block vt-size-fd-bt   mg-right-fd-xx-sm bd-rad-fl-md bd-none hr-size-fd-md bg-dk-green fg-light pos-rel')
+			sb.sb_addProperty(completedStageBtn,'class','mg-bottom-fd-x-tn d-inline-block vt-size-fd-bt  mg-right-fd-xx-sm bd-rad-fl-md bd-none hr-size-fd-md bg-dk-green fg-light pos-rel')
+
+			sb.sb_addProperty(placedStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn')
+			sb.sb_addProperty(confirmStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn')
+			sb.sb_addProperty(progressStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn')
+			sb.sb_addProperty(completedStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn')
+
+			sb.sb_addProperty(placedStageLbC,'class','font-fd-xx-tn')
+			sb.sb_addProperty(confirmStageLbC,'class','font-fd-xx-tn')
+			sb.sb_addProperty(progressStageLbC,'class','font-fd-xx-tn')
+			sb.sb_addProperty(completedStageLbC,'class','font-fd-xx-tn')
+			
+			// sb.sb_addProperty(placedStageLb,'class','d-inline-block mg-bottom-fd-md')
+			// sb.sb_addProperty(confirmStageLb,'class','d-inline-block mg-bottom-fd-md')
+			// sb.sb_addProperty(progressStageLb,'class','d-inline-block mg-bottom-fd-md')
+			// sb.sb_addProperty(completedStageLb,'class','d-inline-block mg-bottom-fd-md')
+		
+			// sb.sb_addProperty(activeStage,'class','pos-rel left-offset-fd-xx-tn')
+			sb.sb_addProperty(completed,'class','font-fd-x-tn form__checkbox_button')
+
+
+			sb.sb_addProperty(trackEst,'class','d-block bg-dark-lta pd-top-fd-tn hr-size-fl-xx-bg vt-size-fd-xxx-tn')
+			// sb.sb_addProperty(success,'class','d-inline-block font-fd-xxx-tn fg-dark-lt')
+			sb.sb_addProperty(trackEstOd,'class','d-inline-block font-fd-xxx-tn pd-left-fl-bt hr-size-fl-sm')
+			sb.sb_addProperty(trackEstTm,'class','d-inline-block font-fd-xxx-tn pd-left-fl-xxx-tn hr-size-fl-sm')
+
+
+
+			sb.sb_insertInner(placedStageLbL,'Order Placed')
+			sb.sb_insertInner(confirmStageLbL,'Order Confirmed')
+			sb.sb_insertInner(progressStageLbL,'In Progress')
+			sb.sb_insertInner(completedStageLbL,'Order Completed')
+
+			sb.sb_insertInner(placedStageLbC,'Your order has been successfuly placed')
+			sb.sb_insertInner(confirmStageLbC,'Your order has been confirmed by our staff')
+			sb.sb_insertInner(progressStageLbC,'We are busy preparing your order')
+			sb.sb_insertInner(completedStageLbC,'Your order has been successfully completed')
+
+			// sb.sb_insertInner(completed,'&#10003;')
+	
+
+			sb.sb_addProperty(trackEstTmLab,'class','d-block mg-bottom-fd-xx-tn font-fd-x-tn')
+			sb.sb_addProperty(trackEstTmClock,'class','d-block font-fd-xx-tn fg-secondary')
+			sb.sb_addProperty(trackeEstOdLab,'class','d-block mg-bottom-fd-xx-tn font-fd-x-tn')
+			sb.sb_addProperty(trackEstOdNm,'class','d-block font-fd-xx-tn fg-secondary')
+
+		
+			
+		
+
+
+			
+			sb.sb_addProperty(received,'class','hr-size-fl-xx-bg mg-bottom-fd-hg pos-rel top-offset-vh-xx-tn')
+			sb.sb_addProperty(completed,'class','font-fd-x-tn form__checkbox_button')
+
+			sb.sb_insertInner(completed,'&#10003;')
+			sb.sb_insertInner(trackEstTmLab,'ESTIMATED TIME')
+			sb.sb_insertInner(trackEstTmClock,'30 Minutes')
+			sb.sb_insertInner(trackeEstOdLab,'ORDER NUMBER')
+			sb.sb_insertInner(trackEstOdNm,'#'+trackresponse.orderstatus.orderno)
+			
+			// sb.sb_insertInner(sb.view,'')
+
+
+
+			
+			sb.sb_addChild(trackEstOd,trackeEstOdLab)
+			sb.sb_addChild(trackEstOd,trackEstOdNm)
+			sb.sb_addChild(trackEstTm,trackEstTmLab)
+			sb.sb_addChild(trackEstTm,trackEstTmClock)
+
+		
+			
+			sb.sb_addChild(stages,stagesBgO)
+			sb.sb_addChild(stages,stagesBgT)
+			sb.sb_addChild(stages,stagesBgTr)
+			// sb.sb_addChild(stages,stagesBgF)
+
+
+			sb.sb_addChild(stages,placedStage)
+			// sb.sb_addChild(placedStageBtn,completed)
+			sb.sb_addChild(placedStage,placedStageBtn)
+			sb.sb_addChild(placedStageLb,placedStageLbL)
+			sb.sb_addChild(placedStageLb,placedStageLbC)
+			sb.sb_addChild(stagesLabels,placedStageLb)
+
+			sb.sb_addChild(stages,confirmStage)
+			sb.sb_addChild(confirmStage,confirmStageBtn)
+			// sb.sb_addChild(confirmStageBtn,activeStage)
+			sb.sb_addChild(confirmStageLb,confirmStageLbL)
+			sb.sb_addChild(confirmStageLb,confirmStageLbC)
+			sb.sb_addChild(stagesLabels,confirmStageLb)
+
+
+			sb.sb_addChild(stages,progressStage)
+			sb.sb_addChild(progressStage,progressStageBtn)
+			sb.sb_addChild(progressStageLb,progressStageLbL)
+			sb.sb_addChild(progressStageLb,progressStageLbC)
+			sb.sb_addChild(stagesLabels,progressStageLb)
+
+
+
+
+
+
+			sb.sb_addChild(stages,completedStage)
+			sb.sb_addChild(completedStage,completedStageBtn)
+			sb.sb_addChild(completedStageLb,completedStageLbL)
+			sb.sb_addChild(completedStageLb,completedStageLbC)
+			sb.sb_addChild(stagesLabels,completedStageLb)
+
+			sb.sb_addChild(activeStage,aCircleLf)
+			sb.sb_addChild(activeStage,aCircleMd)
+			sb.sb_addChild(activeStage,aCircleRt)
+
+			sb.sb_addChild(trackEst,trackEstOd)
+			sb.sb_addChild(trackEst,trackEstTm)
+			sb.sb_addChild(received,trackEst)
+			sb.sb_addChild(received,stages)
+			sb.sb_addChild(received,stagesLabels)
+
+
+			// sb.sb_addChild(sb.view,received)
+			this.emit({type:'component-resource-creation-done',data: received})
+
+			
+			switch(trackresponse.orderstatus.status.trim()){
+
+				case 'placed':{
+
+
+
+					sb.sb_addProperty(stagesBgO,'class','vt-size-fl-tn bg-secondary left-offset-fd-x-tn mg-top-fd-x-tn hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addProperty(stagesBgT,'class','vt-size-fl-tn bg-secondary left-offset-fd-x-tn track-offset-sm hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addProperty(stagesBgTr,'class','vt-size-fl-tn bg-dark-lt left-offset-fd-x-tn track-offset-lg hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addChild(placedStageBtn,sb.sb_copyDeep(completed))
+					sb.sb_addChild(confirmStageBtn,sb.sb_copyDeep(completed))
+					// sb.sb_addProperty(placedStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(confirmStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(progressStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(completedStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark-lta')
+
+					sb.sb_addProperty(placedStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(confirmStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(progressStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(completedStageLb,'class','d-inline-block fg-dark-lta mg-bottom-fd-md')
+		
+					sb.sb_addChild(progressStageBtn,activeStage)
+
+
+				}
+				break;
+				case 'progress':{
+
+					sb.sb_addProperty(stagesBgO,'class','vt-size-fl-tn bg-secondary left-offset-fd-x-tn mg-top-fd-x-tn hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addProperty(stagesBgT,'class','vt-size-fl-tn bg-secondary left-offset-fd-x-tn track-offset-sm hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addProperty(stagesBgTr,'class','vt-size-fl-tn bg-dark-lt left-offset-fd-x-tn track-offset-lg hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addChild(placedStageBtn,sb.sb_copyDeep(completed))
+					sb.sb_addChild(confirmStageBtn,sb.sb_copyDeep(completed))
+
+					// sb.sb_addProperty(placedStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(confirmStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(progressStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(completedStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark-lta')
+
+					sb.sb_addProperty(placedStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(confirmStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(progressStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(completedStageLb,'class','d-inline-block fg-dark-lta mg-bottom-fd-md')
+
+					sb.sb_addChild(progressStageBtn,activeStage)
+
+				}
+				break;
+				default :{
+
+					sb.sb_addProperty(stagesBgO,'class','vt-size-fl-tn bg-secondary left-offset-fd-x-tn mg-top-fd-x-tn hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addProperty(stagesBgT,'class','vt-size-fl-tn bg-secondary left-offset-fd-x-tn track-offset-sm hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addProperty(stagesBgTr,'class','vt-size-fl-tn bg-secondary left-offset-fd-x-tn track-offset-lg hr-size-fd-xxx-tn pos-abs')
+					sb.sb_addChild(placedStageBtn,sb.sb_copyDeep(completed))
+					sb.sb_addChild(confirmStageBtn,sb.sb_copyDeep(completed))
+					sb.sb_addChild(progressStageBtn,sb.sb_copyDeep(completed))
+
+					// sb.sb_addProperty(placedStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(confirmStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(progressStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+					// sb.sb_addProperty(completedStageLbL,'class','font-fd-x-tn mg-bottom-fd-xxx-tn fg-dark')
+
+					sb.sb_addProperty(placedStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(confirmStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(progressStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+					sb.sb_addProperty(completedStageLb,'class','d-inline-block fg-dark mg-bottom-fd-md')
+
+					sb.sb_addChild(completedStageBtn,sb.sb_copyDeep(completed))
+
+				}
+
+
+
+		}
+
+
+
+		 }else{
+
+
+		 }
+	}
+	
+
+	function fail(data){
+
+		this.emit({type: 'stop-preloader',data: data})
 
 	}
 	
@@ -3245,16 +5402,16 @@ List.prototype.createRegular = function(itemData,options){
 
 			sb.sb_addProperty(inputId,'type','hidden')
 			sb.sb_addProperty(inputId,'name','product_id')
-			sb.sb_addProperty(inputId,'value','sampleid')
+			sb.sb_addProperty(inputId,'value',itemData.item_id)
 
 			sb.sb_addProperty(inputPrice,'type','hidden')
 			sb.sb_addProperty(inputPrice,'name','product_price')
-			sb.sb_addProperty(inputPrice,'value','sampleprice')
+			sb.sb_addProperty(inputPrice,'value',itemData.price)
 
 			
 			sb.sb_addProperty(inputName,'type','hidden')
 			sb.sb_addProperty(inputName,'name','product_name')
-			sb.sb_addProperty(inputName,'value','sampleproducts')
+			sb.sb_addProperty(inputName,'value',itemData.Name)
 
 			sb.sb_addProperty(input,'type','number')
 			sb.sb_addProperty(input,'name','product_qty')
@@ -3291,7 +5448,7 @@ List.prototype.createRegular = function(itemData,options){
 			sb.sb_addProperty(input,'class','vt-size-fd-bt float-left d-inline-block hr-size-fl-xxx-sm pd-fd-xx-tn bg-light bd-fd-secondary-xx-bt ')
 			sb.sb_addProperty(input,'placeholder','0')
 			sb.sb_addEvent(input,'input',this.updateCart.bind(this))
-			sb.sb_addProperty(small,'class','hr-size-fl-lg d-block pos-rel')
+			sb.sb_addProperty(small,'class','pd-left-fd-xx-tn d-block pos-abs mg-top-fd-tn')
 			sb.sb_addProperty(smallSp,'class','d-inline-block font-wt-bolder fg-secondary font-fd-xx-tn pos-rel')
 			sb.sb_addProperty(priceSp,'class','d-inline-block font-wt-bolder fg-secondary font-fd-xx-tn pos-rel')
 			sb.sb_addProperty(st,'class','clearfix')
@@ -3302,9 +5459,8 @@ List.prototype.createRegular = function(itemData,options){
 			sb.sb_insertInner(sp2,itemData.Name)
 			sb.sb_insertInner(minus,'-')
 			sb.sb_insertInner(add,'+')
-			sb.sb_insertInner(priceSp,'152,99')
-			sb.sb_insertInner(smallSp,'R')
-			
+			sb.sb_insertInner(priceSp,'R'+itemData.price)
+		
 			
 			
 		
@@ -3315,7 +5471,7 @@ List.prototype.createRegular = function(itemData,options){
 			// sb.sb_addChild(sp3,add)
 			
 			sb.sb_addChild(sp3,fm)
-			sb.sb_addChild(small,smallSp)
+			// sb.sb_addChild(small,smallSp)
 			sb.sb_addChild(small,priceSp)
 			sb.sb_addChild(sp3,small)
 			
@@ -3411,6 +5567,8 @@ List.prototype.addToCart = function(ev){
 
 	sb.sb_stopEventBubble(ev)
 	var productData = this.getAddProduct(ev)
+	console.log('The cart product data')
+	console.log(productData)
 	this.emit({type:'add-to-cart',data: productData})
 }
 
@@ -4177,6 +6335,10 @@ Cart.prototype.addToCart = function(product){
 	 if(localStorage.cart){
 
 		var products = sb.sb_jsonToJs(localStorage.getItem('cart'))
+		console.log('The products content')
+		console.log(products)
+		console.log('The product in to be added')
+		console.log(product)
 
 		if(products.length > 0){
 
@@ -4184,17 +6346,21 @@ Cart.prototype.addToCart = function(product){
 				
 				console.log('The productId inside the cart product')
 				console.log(products[p].productId)
+				console.log(typeof products[p].productId)
 				console.log('The productId inside the add product')
 				console.log(product.productId)
+				console.log(typeof product.productId)
+				console.log(products[p].productId)
 				
 				if(products[p].productId === product.productId){
 	
 					console.log('The productIds match here')
+					// console.log(product.productQty)
 					products[p].productQty += 1
 					break
 	
 					
-				}else if(products[p] === products.length - 1 ){
+				}else if(p === products.length - 1 ){
 	
 					console.log('its either it is not breaking out of the loop')
 					products.push(product)
@@ -4222,6 +6388,8 @@ Cart.prototype.addToCart = function(product){
 
 	 }else{
 
+		console.log('The cart contains no items')
+		console.log(product)
 		localStorage.setItem('cart',sb.sb_jsToJson([product]))
 	 }
 	

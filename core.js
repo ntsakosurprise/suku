@@ -175,6 +175,26 @@ CORE.prototype.dom = {
 
 	},
 
+	copyDeep: function(el){
+
+
+		var el = SUKU.copy_deep(el);
+
+		return el;
+
+
+	},
+
+	copyShallow: function(el){
+
+
+		var el = SUKU.copy_shallow(el);
+
+		return el;
+
+
+	},
+
 
 	queryById: function(selector){
 
@@ -184,6 +204,16 @@ CORE.prototype.dom = {
 
 
 	},
+
+	queryByTag: function(parent,selector){
+
+
+		return SUKU.getby_tag(parent,selector);
+
+
+
+},
+
 
 	queryByAttribute: function(attrib){
 

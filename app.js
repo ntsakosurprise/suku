@@ -29,13 +29,13 @@ var app = {
     onDeviceReady: function() {
 
 
-     
-        var logbtn = document.getElementById('login-btn')
-        logbtn.addEventListener('click',function(){
+        window.location.href = 'bargain.html'
+        // var logbtn = document.getElementById('login-btn')
+        // logbtn.addEventListener('click',function(){
 
-            window.location.href = 'register.html'
+        //     window.location.href = 'bargain.html'
 
-        },false)
+        // },false)
        
     },
 

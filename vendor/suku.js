@@ -87,12 +87,19 @@ var SUKU = (function(){
 			},// End of getElementById method
 
 
-			getby_tag: function(tag_selector){
+			getby_tag: function(parent,tag_selector){
 
+					var elementsByTag
 
+					if(parent){
 
-					var elementsByTag = document.getElementsByTagName(tag_selector);
+						elementsByTag = parent.getElementsByTagName(tag_selector);
 
+					}else{
+
+						elementsByTag = document.getElementsByTagName(tag_selector);
+					}
+				
 					return elementsByTag;
 
 			},// End of getelementBy Class method
