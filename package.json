@@ -1,0 +1,15 @@
+{
+  "name": "suku",
+  "version": "1.0.0",
+  "description": "Suku is a cross-browser dom manipultion library that wrapps around core javascript dom manipulation techniquest",
+  "main": "suku.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "htts://ntsakosurprise.github.io.com/suku"
+  },
+  "author": "",
+  "license": "ISC"
+}
