@@ -2,9 +2,11 @@
   "name": "suku",
   "version": "1.0.0",
   "description": "a tiny library for dom manipulation and ajax requests",
-  "main": "main.js",
+  "main": "dist/suku.umd.min.js",
+  "module": "dist/suku.esm.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile:build:cjs": "webpack --config webpack.config.js",
+    "compile:build:esm": "webpack --config webpack.config_esm.js"
   },
   "keywords": [
     "dom",
