@@ -15,6 +15,7 @@ Preloader.prototype.runPreloader = function(){
 	
 	var sb = this.sb 
 	
+	
 	console.log('The preloader is running')
 	sb.sb_toggleClass(sb.view,'d-none')
 	
