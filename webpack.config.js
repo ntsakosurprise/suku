@@ -9,8 +9,8 @@ module.exports = [
     entry: './src/index.js',
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: 'my-lib.umd.min.js',
-      library: 'MyLib',
+      filename: 'suku.umd.min.js',
+      library: 'Suku',
       libraryTarget: 'umd',
       globalObject: 'this',
       umdNamedDefine: true,
@@ -32,24 +32,5 @@ module.exports = [
     devtool: false,
   },
 
-  // --- ESM UNMINIFIED BUILD (modern bundlers) ---
-  {
-    mode: 'production',
-    entry: './src/index.js',
-    experiments: {
-      outputModule: true,
-    },
-    output: {
-      path: path.resolve(__dirname, 'dist'),
-      filename: 'my-lib.esm.js',
-      library: {
-        type: 'module',
-      },
-    },
-    optimization: {
-      minimize: false, // keep unminified for readability / tree-shaking
-    },
-    plugins: [],
-    devtool: 'source-map', // optional, useful for debugging
-  },
+
 ];
