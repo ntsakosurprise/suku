@@ -1,204 +1,68 @@
 
 
-# Introduction
+# SUKU.JS is a lightweight DOM manipulation library
 
-**suku** is a lightweight, modular, and event-driven Node.js framework for building extensible applications with ease. Perfect for creating APIs, plugins, middleware-based apps, or small web services.
+# 🌐 SUKU — Lightweight DOM + AJAX Utility Framework
 
-It was designed to be simple, quick to learn and build with. It doesn't matter if you are a designer, developer,or anything in between. If you have a basic understanding of Javascript,you can have your application running in 2 minutes, all with a single line of code.
+**SUKU** is a lightweight JavaScript utility framework that simplifies DOM manipulation, HTML5 APIs, event handling, AJAX calls, JSON processing, table creation, form serialization, and more — all with **zero dependencies**.
 
-_If you are upgrading: please see [`UPGRADING.md`](UPGRADING.md)._
-
-# suku
-
-[![npm version](https://img.shields.io/npm/v/suku.svg)](https://www.npmjs.com/package/suku)  
-[![License: MIT](https://img.shields.io/npm/l/suku.svg)](https://github.com/iiprodakts/suku/blob/master/LICENSE)  
-<a href="https://github.com/iiprodakts/suku/blob/development/.github/workflows/checks.yaml">
-<img src="https://img.shields.io/github/actions/workflow/status/iiprodakts/suku/checks.yaml?style=for-the-badge" alt="suku license" />
-</a>&nbsp;
+SUKU is inspired by the simplicity that made jQuery popular but redesigned for the modern JavaScript ecosystem.  
+It provides clean, focused helper methods while staying small, fast, and dependency-free.
 
 ---
 
-# Features
+## 🧭 Why SUKU Exists
 
-- **Event-driven architecture** – handle asynchronous workflows elegantly.
-- **Plugin-based design** – easily extend functionality with modular plugins.
-- **Routing & middleware** – define custom routes and middleware in a clean configuration.
-- **Clustering support** – scale your apps across multiple CPU cores.
-- **Flexible configuration** – `.config.json` controls routing, middleware, logging, and clustering.
+Modern browser APIs are powerful but often verbose, repetitive, and inconsistent across DOM operations.  
+Many projects load entire frontend frameworks just to make simple tasks easier, adding unnecessary weight and complexity.
+
+**SUKU exists to bridge this gap:**
+
+- Minimal footprint  
+- Modern DOM operations without wrappers  
+- Clear, direct method calls instead of chained abstractions  
+- Zero dependencies  
+- No build step or configuration  
+- Works instantly in any browser environment  
+
+If you want convenience without bloat, SUKU provides a clean, modern alternative.
 
 ---
 
-# Installation
+## 🔍 SUKU vs. jQuery
 
-```bash
-npm install suku
+SUKU borrows jQuery’s philosophy of making common tasks easier but takes a lightweight, modern approach.
+
+| Feature | jQuery | SUKU |
+|--------|--------|------|
+| Size | Larger | Much smaller |
+| Dependencies | Requires jQuery core | None |
+| Syntax | `$()` wrappers, chainable | Direct methods: `SUKU.method(el, ...)` |
+| DOM Usage | Wrapped jQuery objects | Native DOM nodes |
+| Features | DOM, events, AJAX, animations, plugins | DOM, HTML5 APIs, tables, JSON, dimensions, AJAX |
+| Philosophy | Abstraction-heavy | Simple utilities |
+
+If you enjoy jQuery’s convenience but want a zero-dependency utility library built for 2025+, SUKU is designed for you.
+
+---
+
+## 📦 Installation
+
+### CDN
+```html
+<script src="suku.min.js"></script>
 ```
 
-# Quick Guide
+### Local file
 
-```js
-import { suku } from "suku";
-suku(); // Starts suku server with default configuration
-```
-
-## With Plugins
-
-```js
-import { suku } from "suku";
-import HelloPlugin from "./plugins/Hello.js";
-
-const plugins = {
-	Hello: HelloPlugin,
-};
-
-suku(plugins);
-```
-
-## Configurations
-
-suku will look for a `.config.json` configuration in the root of your project. This configuration file is used to configure your preferences for things such _middlewares,routes,static and view directories_,etc
-
-Create a .config.json at your project root:
-
-```js
-import routes from "./includes/routes";
-import * as middlewares from "./includes/globals";
-
-export default {
-	middleware:
-		publik: middlewares.public ,
-		privet:  middlewares.pprivate ,
-		all: middlewares.all ,
-	}, // Your middlewares configurations
-	view: true, // Enable rendering web pages
-	router: routes, // Your api routes
-	logger: { level: "info" }, // Enable info logging
-	cluster: { workers: 3, spawn: true }, // Enabble cluster
-};
-```
-
-### Notes
-
-- **middleware** – Load global, public, and private middleware functions.
-- **view** – Enable rendering HTML templates or static assets.
-- **router** – Define routes and map them to plugin handlers.
-- **logger** – Control logging levels (info, warn, error, etc.).
-- **cluster** – Scale the server using multiple worker processes.
-
-## Routing Examples
-
-In suku, every route is an object that contains a couple of properties that determine charateristics of that route:
-
-```js
-
-   {
-        path: '/hello', // Route path with request handler(plugin) name(hello)
-        method: 'GET', // Use get method for this route
-        type: 'public', // Make this a publicly available path
-
-    },
+```html
+<script src="./suku.js"></script>
 
 ```
 
-Every route object represents a handler(plugin) whose task is to handle a request in a request/response lifecycle, **more on this shortly**.
+## Quick Start
 
-## suku plugins
 
-### Example Plugin Hello
-
-```js
-class Hello {
-	constructor(pao) {
-		this.pao = pao; // Every plugin is passed this object
-	}
-
-	init() {
-		this.listens({
-			"handle-hello-task": this.handleHelloTask.bind(this), // Event and handling method
-		}); // Call listens() method (available to every suku plugin) to set events that this module  listens to
-	} // Define the required init() method
-
-	handleHelloTask(data) {
-		const self = this;
-
-		self.callback = data.callback;
-		const { payload } = data;
-		const { user } = payload;
-		const { name, surname } = user; // assume name to be "Ntsako" and surname to be "Mashele"
-		const message = `Hello ${name} ${surname}, I'm happy to meet you.'`;
-		return self.callback(null, { message: message });
-	}
-}
-
-export default Hello;
-```
-
-And that's it! The thing is done!
-Now when you navigate to **_http://localhost:3000/hello_**
-you should see the text **_Hello Ntsako Mashele, I'm happy to meet you_**.
-on your browser.
-
-### The `data` object
-
-Every `event-handling` method of a plugin receives a `data` argument which contains `data` that the `event-handling` module expects to be able to perform and complete its task. The `data` argument is sent by an `event-emitting` module that is in need of a task that the `event-handling` performs.
-
-In a request/response lifecycle, your `request` handling module/plugin is sent a `data` object that your plugin requires to complete its task. The emitted `data` object contains information needed in a request/response lifecycle. A picture is worth a thousand words, please refer to the `request` `data` object below:
-
-```js
-
-    {
-        payload: {
-
-                parsed: {
-                    url: '/greeting/Ntsako/Mashele',
-                    handler: 'greeting' //
-                }, // Request information directly extracted from the request object
-                user: { name: 'Ntsako', surname: 'Mashele' }, // Parameters or data extracted
-                handler: 'hello', // Request handling plugin name (sometimes refered to as alias)
-                request: {
-
-                    req: [IncomingMessage],
-                    res: [ServerResponse]
-                } // Request and Response objects for further manipulation (using express framework)
-
-        }, // Contains data about the request
-        callback: [Function: bound taskerHandler] // Method to be called when task is completed
-
-    }// Data object
-
-```
-
-## How does it work?
-
-Every suku plugin you create should include an `init()` method whose sole purpose is to call `this.listen()` method. The `this.listen()` method takes an object that contains a list of events that your plugin should listen to. As an An suku plugin author, you define a list of events that you want to handle when emitters emit them.
-
-Instead of listening to `events`, sometimes you create plugins that emit those events,in which case your listeners have to know about your events in order to listen to them to perform whatever task they exist to perform.
-
-The suku framework is its self made up of plugins building upon its base. These plugins also emit and listen to certain events.
-
-As authors of these plugins/modules, we have defined specific events that we expect interested consumers(listeners) to listen and handle. One of these events is used in the request/response lifecycle and it takes the form `handle-pluginname-task`. This event is emitted whenever a request is made to a server running suku.
-
-Any plugin you implement to handle a request should listen to the event of the form `handle-pluginname-task` where `pluginname` refers to the name of your plugin.
-
-In the `Hello` example above,the request is handled by the `Hello` plugin,so the plugin listens to the `handle-hello-task` event.
-
-## Route Alias
-
-There are cases where you find the use of a `handler` as part of the route object's `path`property is undesired. In such a case, you can use a `route Alias` by adding an `alias` property in the `route` object with the name of the handler as the value of the property. **See an example below**.
-
-Using the `Hello` example above, the `route` object with an `alias` will be written this way:
-
-```js
-
-    {
-
-        path: '/greeting',
-        type: 'public',
-        alias: 'hello'
-
-    }
-
-```
 
 # Documentation
 
