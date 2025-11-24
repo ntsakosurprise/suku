@@ -15,6 +15,7 @@
     "ajax",
     "request"
   ],
+  "files": ["dist","package.json","README.md"],
   "author": "Ntsako Surprise",
   "license": "MIT",
   "devDependencies": {
