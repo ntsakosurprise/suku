@@ -62,6 +62,47 @@ If you enjoy jQuery’s convenience but want a zero-dependency utility library b
 
 ## Quick Start
 
+```js
+<h1 id="title">Hello</h1>
+
+<script>
+SUKU.domLoaded(() => {
+    const title = SUKU.getby_id("title");
+    SUKU.add_class(title.classList, "highlight");
+
+    SUKU.ajax_get("/api/user", null, (data) => {
+        console.log("User:", data);
+    });
+});
+</script>
+```
+
+## Example 
+
+```js
+<div id="app"></div>
+
+<script>
+SUKU.domLoaded(() => {
+    const app = SUKU.getby_id("app");
+
+    // Create header
+    const header = SUKU.create_element("h2");
+    SUKU.insert_content_inner(header, "Welcome to SUKU");
+    SUKU.append_child(app, header);
+
+    // Load data via AJAX
+    SUKU.ajax_get("/api/info", null, (data) => {
+        const info = SUKU.create_element("p");
+        SUKU.insert_content_inner(info, "Server says: " + data.message);
+        SUKU.append_child(app, info);
+    });
+});
+</script>
+
+```
+
+
 
 
 # Documentation
