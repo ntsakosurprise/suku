@@ -60,3 +60,4 @@ This document outlines the planned features and enhancements for the SUKU JavaSc
 SUKU.use((S) => {
     S.sayHello = () => console.log("Hello from plugin!");
 });
+
